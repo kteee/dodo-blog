@@ -335,6 +335,12 @@ export function useBlog(repo: Repo | null) {
         if (on) dirty.current.add(key);
         else dirty.current.delete(key);
       },
+      /** 블로그 그만두기 — 서버에서 지운 뒤 화면도 비움 (다음은 "블로그 만들기" 화면) */
+      async deleteBlogData() {
+        await repo.deleteBlogData();
+        setProfile(null);
+        setPosts([]);
+      },
       async deleteAccount() {
         await repo.deleteAccount();
       },

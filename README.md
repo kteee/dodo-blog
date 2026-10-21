@@ -53,7 +53,8 @@ http://localhost:5180 (투두 5175 · 북로그 5177 · 홈 5178)
 1. **SQL Editor** 에 `supabase/schema.sql` 전체를 붙여넣고 Run
    - `blog_profiles`(계정당 한 행, handle 유니크), `blog_posts` + RLS + 상한(글 3,000 / 본문 100KB / 태그 10) + Storage 버킷 `blog-images` 와 정책
    - **읽기 정책이 두 갈래**: 내 글은 전부(`own select`), 남의 글은 `status='public'` 만 — `anon` 도 읽음. 쓰기는 본인만, delete 정책 없음
-   - `touch_updated_at`, `enforce_row_limit` 는 투두·북로그와 같은 내용. `delete_my_account` 는 **블로그 이미지 목록 행도 지우도록 바뀜** (`create or replace`, 투두·북로그 탈퇴에도 그대로 적용돼 안전)
+   - `touch_updated_at`, `enforce_row_limit` 는 투두·북로그와 같은 내용. `delete_blog_data()` 추가 (아래 "두두 계정"). `delete_my_account` 는 **여기서 정의하지 않음** — 투두 008 이 원본
+   - 투두 `supabase/migrations/008_account.sql` 이 먼저 실행돼 있어야 "두두 계정 탈퇴"가 블로그 기록까지 지운다 (008 은 `delete_blog_data` 가 있으면 부름)
 2. 30일 지난 삭제분 파기: `supabase/migrations/002_purge_deleted.sql` 실행 (pg_cron 은 투두 005 에서 이미 켜져 있음)
 3. **Authentication → URL Configuration → Redirect URLs** 에 추가:
    - `https://blog.dododiary.com`
@@ -64,10 +65,15 @@ http://localhost:5180 (투두 5175 · 북로그 5177 · 홈 5178)
 > Publishable key 는 브라우저에 노출돼도 되는 키. 보안은 RLS 가 담당한다.
 > **Secret key(`sb_secret_...`)나 service_role 키는 절대 `.env` 에 넣지 말 것.**
 
-### 회원 탈퇴는 두두 계정 전체를 지운다
+### 두두 계정 (투두·북로그·블로그 공통)
 
-`delete_my_account` 는 `auth.users` 행을 지우므로 투두·북로그·블로그 데이터가 **함께** 삭제된다. 블로그는 그 직전에 Storage 의 내 이미지 파일을 지운다.
-마이페이지 문구와 처리방침에 그렇게 적어 뒀다. 투두·북로그 쪽 마이페이지 문구도 "블로그 기록도 함께 삭제" 로 바꿔 주는 게 좋다.
+두두 서비스는 Supabase 프로젝트·구글 로그인·계정을 하나로 같이 쓴다.
+
+- **로그인 공유**: 세션을 localStorage 대신 `.dododiary.com` 쿠키에 저장(`src/data/supabase.ts`, `@supabase/ssr`). 한 서비스에서 로그인하면 todo/books/blog/홈 모두 로그인 상태. localhost 에선 그 주소에만 저장. 투두·북로그의 `supabase.ts` 와 같은 쿠키 설정.
+- **블로그 그만두기 vs 계정 탈퇴** (마이페이지):
+  - `delete_blog_data()` — 글(임시·삭제 대기 포함)·블로그 주소(프로필)·Storage 이미지 목록 행을 하드 삭제. 앱은 그 직전에 Storage API 로 이미지 파일을 지운다. 계정과 다른 서비스는 그대로이고, 다음 방문 땐 다시 "블로그 만들기"부터 (아이디는 다른 사람이 가져갈 수 있음).
+  - `delete_my_account()` — **원본은 투두 `dodo-todo/supabase/migrations/008_account.sql`**: `delete_todo_data`·`delete_books_data`·`delete_blog_data` 중 있는 것을 전부 부른 뒤 계정 삭제. 블로그 schema.sql 은 이 함수를 다시 정의하지 않는다. 블로그 앱도 탈퇴 직전에 이미지 파일을 먼저 지운다.
+- 배포 순서: 투두 008 → 블로그 `schema.sql` → 블로그 배포 (쿠키 전환이라 기존 로그인은 한 번 다시).
 
 ### 백업
 

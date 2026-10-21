@@ -25,7 +25,9 @@ export interface Repo {
   restorePost(id: string): Promise<void>;
   /** 글에 넣을 이미지. 돌려주는 주소를 마크다운에 적는다 */
   uploadImage(file: File): Promise<string>;
-  /** 회원 탈퇴: 계정과 모든 데이터(투두·북로그 포함)를 즉시 영구 삭제 */
+  /** 블로그 그만두기: 글·이미지·블로그 주소만 삭제. 계정과 다른 두두 서비스는 그대로 */
+  deleteBlogData(): Promise<void>;
+  /** 두두 계정 탈퇴: 계정과 모든 두두 서비스(투두·북로그·블로그) 기록을 즉시 영구 삭제 */
   deleteAccount(): Promise<void>;
 
   /* ── 누구나 (로그인 없이) ── */

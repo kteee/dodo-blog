@@ -127,10 +127,15 @@ create policy "blog images own update" on storage.objects for update to authenti
 create policy "blog images own delete" on storage.objects for delete to authenticated
   using (bucket_id = 'blog-images' and (storage.foldername(name))[1] = (select auth.uid())::text);
 
--- ── 회원 탈퇴 (투두·북로그와 같은 함수·같은 계정) ─────────
--- auth.users 행을 지우면 투두·북로그·블로그 테이블이 user_id 외래키(on delete cascade)로 **함께** 지워진다.
--- 올린 이미지 파일은 앱이 탈퇴 직전에 Storage API 로 지우고, 혹시 남은 목록 행은 여기서 한 번 더 지운다.
-create or replace function public.delete_my_account() returns void
+-- ── 블로그 그만두기 / 두두 계정 (투두 008_account.sql 과 같은 구조) ─────────
+-- 두두 시리즈(투두·북로그·블로그)는 Supabase 프로젝트·계정 하나를 같이 쓴다.
+--   delete_blog_data()   블로그 기록만 하드 삭제: 글(임시·삭제 대기 포함)·블로그 주소(프로필)·Storage 의 내 이미지 목록 행.
+--                        계정과 다른 서비스는 그대로. 다음 방문 땐 다시 "블로그 만들기"부터
+--   delete_my_account()  **원본은 투두 `dodo-todo/supabase/migrations/008_account.sql`** — 서비스별 delete_*_data 가
+--                        있는 만큼 차례로 부른 뒤 계정(auth.users)을 지운다. 이 파일은 그 함수를 다시 정의하지 않는다.
+-- security definer + auth.uid() 고정이라 본인 것만 지울 수 있고, 클라이언트 키로 직접 하드 삭제는 여전히 불가.
+-- Storage 의 파일 자체는 앱이 삭제 직전에 Storage API 로 지운다 (기록 삭제·계정 탈퇴 둘 다). 여기선 남은 목록 행만 한 번 더 정리.
+create or replace function public.delete_blog_data() returns void
 language plpgsql security definer set search_path = '' as $$
 declare
   uid uuid := auth.uid();
@@ -139,8 +144,9 @@ begin
     raise exception 'not authenticated';
   end if;
   delete from storage.objects where bucket_id = 'blog-images' and (storage.foldername(name))[1] = uid::text;
-  delete from auth.users where id = uid;
+  delete from public.blog_posts    where user_id = uid;
+  delete from public.blog_profiles where user_id = uid;
 end $$;
 
-revoke all on function public.delete_my_account() from public, anon;
-grant execute on function public.delete_my_account() to authenticated;
+revoke all on function public.delete_blog_data() from public, anon;
+grant execute on function public.delete_blog_data() to authenticated;

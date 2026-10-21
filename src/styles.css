@@ -765,3 +765,4 @@ th.vt-cell{background:var(--panel-2); font-weight:500; text-align:left}
 }
 /* 에디터: 사이드 없이 한 열 */
 .app.one{grid-template-columns:minmax(0,1fr)}
+.mypage-sub{margin:26px 0 8px; font-size:12px; font-weight:600; letter-spacing:.04em; color:var(--ink-3)} /* "두두 계정" 구역 제목 (투두와 같음) */

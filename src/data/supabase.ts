@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import type { Post, Profile } from "../lib/types";
 import { LIMITS, uuid } from "../lib/types";
 import type { Mine, PublicBlog, Repo } from "./repo";
@@ -7,10 +7,25 @@ const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 // Publishable key(sb_publishable_...) 권장. 예전 anon 키도 받아줌
 const anon = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
 
+/**
+ * 두두 계정: 로그인 세션을 localStorage 대신 `.dododiary.com` 쿠키에 둔다.
+ * 투두·북로그·블로그·홈이 같은 쿠키를 읽으므로 한 번 로그인하면 전부 열린다 (각 서비스의 supabase.ts 가 같은 설정).
+ * 세션이 4KB 를 넘으면 @supabase/ssr 이 쿠키를 여러 개로 쪼개 저장한다. localhost 에선 도메인 없이(이 주소에만) 저장.
+ */
+const SHARED_COOKIE_DOMAIN = ".dododiary.com";
+const onDodo = typeof location !== "undefined" && location.hostname.endsWith(SHARED_COOKIE_DOMAIN.slice(1));
+
 /** 환경변수가 없으면 null → 앱은 로컬 모드로 동작 */
 export const supabase =
   url && anon
-    ? createClient(url, anon, {
+    ? createBrowserClient(url, anon, {
+        cookieOptions: {
+          ...(onDodo ? { domain: SHARED_COOKIE_DOMAIN } : {}),
+          path: "/",
+          sameSite: "lax",
+          secure: onDodo,
+          maxAge: 60 * 60 * 24 * 400, // 브라우저 상한(400일). 실제 로그인 유지는 refresh token 수명을 따름
+        },
         // keepalive: 탭을 닫는 순간 보낸 저장(자동저장 등)도 끝까지 전송됨
         global: { fetch: (input, init) => fetch(input, { ...init, keepalive: true }) },
       })
@@ -86,6 +101,24 @@ async function selectPosts(opts: { userId: string; publicOnly: boolean }): Promi
 
 const EXT: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/gif": "gif", "image/webp": "webp", "image/avif": "avif", "image/svg+xml": "svg" };
 
+/** 올린 이미지 파일 전부 삭제 (auth.users 를 지우거나 목록 행을 지워도 파일은 자동으로 안 사라짐). 실패해도 삭제·탈퇴는 진행 */
+async function removeMyImages() {
+  const db = supabase!;
+  try {
+    const { data: u } = await db.auth.getUser();
+    const uid = u.user?.id;
+    if (!uid) return;
+    for (;;) {
+      const { data: list } = await db.storage.from(BUCKET).list(uid, { limit: 100 });
+      if (!list?.length) break;
+      await db.storage.from(BUCKET).remove(list.map((f) => `${uid}/${f.name}`));
+      if (list.length < 100) break;
+    }
+  } catch {
+    /* 이미지 정리 실패는 삭제·탈퇴를 막지 않음 */
+  }
+}
+
 export function supabaseRepo(): Repo {
   const db = supabase!;
   return {
@@ -130,22 +163,12 @@ export function supabaseRepo(): Repo {
       check(await db.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: "31536000", upsert: false }));
       return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
     },
+    async deleteBlogData() {
+      await removeMyImages();
+      check(await db.rpc("delete_blog_data"));
+    },
     async deleteAccount() {
-      // 올린 이미지 먼저 지움 (auth.users 를 지워도 Storage 파일은 자동으로 안 사라짐). 실패해도 탈퇴는 진행
-      try {
-        const { data: u } = await db.auth.getUser();
-        const uid = u.user?.id;
-        if (uid) {
-          for (;;) {
-            const { data: list } = await db.storage.from(BUCKET).list(uid, { limit: 100 });
-            if (!list?.length) break;
-            await db.storage.from(BUCKET).remove(list.map((f) => `${uid}/${f.name}`));
-            if (list.length < 100) break;
-          }
-        }
-      } catch {
-        /* 이미지 정리 실패는 탈퇴를 막지 않음 */
-      }
+      await removeMyImages();
       check(await db.rpc("delete_my_account"));
       await db.auth.signOut({ scope: "local" });
     },

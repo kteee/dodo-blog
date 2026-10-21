@@ -12,29 +12,46 @@ interface Props {
   profile: Profile | null;
   onProfile: ((patch: Partial<Pick<Profile, "title" | "bio">>) => void) | null;
   onExport: (() => void) | null;
-  /** 회원 탈퇴 — 실패하면 throw */
+  /** 블로그 그만두기 — 이 서비스 기록만 삭제. 실패하면 throw */
+  onDeleteBlogData: () => Promise<void>;
+  /** 두두 계정 탈퇴 — 계정과 모든 두두 서비스 기록 삭제. 실패하면 throw */
   onDeleteAccount: () => Promise<void>;
 }
 
-/** 마이페이지: 내 정보 + 블로그 이름·소개 + 메뉴(데이터 내보내기, 개인정보 처리방침, 회원 탈퇴) */
-export function MyPage({ account, isLocal, profile, onProfile, onExport, onDeleteAccount }: Props) {
-  const [confirming, setConfirming] = useState(false);
-  const [busy, setBusy] = useState(false);
+type Danger = "blog" | "account";
+
+/**
+ * 마이페이지: 내 정보 + 블로그 이름·소개 + 메뉴(데이터 내보내기, 개인정보 처리방침, 블로그 그만두기) + 두두 계정(탈퇴).
+ * 두두 계정은 투두·북로그·블로그가 같이 쓰므로 "이 서비스만 그만두기"와 "계정 탈퇴"를 따로 둔다 (투두와 같은 구조)
+ */
+export function MyPage({ account, isLocal, profile, onProfile, onExport, onDeleteBlogData, onDeleteAccount }: Props) {
+  const [confirming, setConfirming] = useState<Danger | null>(null);
+  const [busy, setBusy] = useState<Danger | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cleared, setCleared] = useState(false);
   const [title, setTitle] = useState(profile?.title ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
 
-  const withdraw = async () => {
-    setConfirming(false);
-    setBusy(true);
+  const run = async (what: Danger) => {
+    setConfirming(null);
+    setBusy(what);
     setError(null);
     try {
-      await onDeleteAccount();
-      location.href = "/"; // 계정이 사라졌으니 처음 화면(로그인 안내)으로
+      if (what === "blog") {
+        await onDeleteBlogData();
+        setCleared(true);
+        setBusy(null);
+      } else {
+        await onDeleteAccount();
+        location.href = "/"; // 계정이 사라졌으니 처음 화면(로그인 안내)으로
+      }
     } catch (e) {
-      report(e, "deleteAccount");
-      setBusy(false);
-      setError("탈퇴를 처리하지 못했습니다. 잠시 후 다시 시도하거나 개인정보 처리방침의 연락처로 문의해 주세요.");
+      report(e, what === "blog" ? "deleteBlogData" : "deleteAccount");
+      setBusy(null);
+      setError(
+        (what === "blog" ? "블로그를 삭제하지 못했습니다." : "탈퇴를 처리하지 못했습니다.") +
+          " 잠시 후 다시 시도하거나 개인정보 처리방침의 연락처로 문의해 주세요.",
+      );
     }
   };
   const saveProfile = () => {
@@ -55,11 +72,11 @@ export function MyPage({ account, isLocal, profile, onProfile, onExport, onDelet
         <div className="mypage-who">
           <div className="mypage-name">{account.name}</div>
           <div className="mypage-email">{account.email}</div>
-          <div className="mypage-via">{isLocal ? "로컬 모드 (이 브라우저에만 저장)" : "Google 계정으로 로그인 · 두두 투두·북로그와 같은 계정"}</div>
+          <div className="mypage-via">{isLocal ? "로컬 모드 (이 브라우저에만 저장)" : "Google 계정으로 로그인"}</div>
         </div>
       </section>
 
-      {profile && onProfile && (
+      {profile && onProfile && !cleared && (
         <section className="mypage-blog">
           <p className="sect-label">내 블로그</p>
           <div className="mk-row">
@@ -98,14 +115,28 @@ export function MyPage({ account, isLocal, profile, onProfile, onExport, onDelet
           </a>
         </li>
         <li>
-          <button className="danger" onClick={() => setConfirming(true)} disabled={busy}>
+          <button className="danger" onClick={() => setConfirming("blog")} disabled={busy !== null || cleared || !profile}>
             <span>
-              <b>{busy ? "탈퇴 처리 중…" : "회원 탈퇴"}</b>
+              <b>{busy === "blog" ? "삭제 중…" : cleared ? "블로그를 삭제했어요" : "블로그 그만두기"}</b>
               <small>
                 {isLocal
-                  ? "이 브라우저에 저장된 글이 모두 지워져요"
-                  : "두두 계정 자체가 삭제돼요 — 블로그뿐 아니라 두두 투두·북로그의 기록도 함께 즉시 삭제되며 되돌릴 수 없어요"}
+                  ? "이 브라우저에 저장된 블로그와 글이 모두 지워져요"
+                  : "글·이미지·블로그 주소가 즉시 삭제되며 되돌릴 수 없어요. 계정과 다른 두두 서비스는 그대로예요"}
               </small>
+            </span>
+            <i aria-hidden="true">›</i>
+          </button>
+        </li>
+      </ul>
+
+      {/* 두두 계정: 투두·북로그·블로그가 같이 쓰는 계정. 탈퇴는 전부 삭제라 블로그 메뉴와 떼어 둠 */}
+      <h2 className="mypage-sub">두두 계정</h2>
+      <ul className="mypage-menu">
+        <li>
+          <button className="danger" onClick={() => setConfirming("account")} disabled={busy !== null}>
+            <span>
+              <b>{busy === "account" ? "탈퇴 처리 중…" : "두두 계정 탈퇴"}</b>
+              <small>{isLocal ? "이 브라우저에 저장된 기록이 모두 지워져요" : "투두·북로그·블로그 등 모든 두두 서비스의 기록과 계정이 즉시 삭제되며 되돌릴 수 없어요"}</small>
             </span>
             <i aria-hidden="true">›</i>
           </button>
@@ -113,17 +144,30 @@ export function MyPage({ account, isLocal, profile, onProfile, onExport, onDelet
       </ul>
       {error && <p className="mypage-error">{error}</p>}
 
-      {confirming && (
+      {confirming === "blog" && (
         <ConfirmDialog
-          title="정말 탈퇴하시겠습니까?"
+          title="블로그를 그만둘까요?"
           body={
             isLocal
               ? "이 브라우저에 저장된 블로그와 글이 모두 지워지며 복구할 수 없습니다."
-              : "두두 계정이 삭제됩니다. 블로그의 글·이미지와 함께 두두 투두의 할 일·메모, 북로그의 책·노트까지 즉시 영구 삭제되며 복구할 수 없습니다. 필요하면 각 서비스에서 먼저 데이터를 내보내 주세요."
+              : `글과 이미지가 즉시 영구 삭제되고 주소 /${profile?.handle ?? ""} 도 비워져요. 복구할 수 없습니다. 두두 계정과 다른 서비스의 기록은 그대로 남습니다. 필요하면 먼저 데이터를 내보내 주세요.`
+          }
+          confirmLabel="삭제"
+          onConfirm={() => run("blog")}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
+      {confirming === "account" && (
+        <ConfirmDialog
+          title="정말 두두 계정을 탈퇴하시겠습니까?"
+          body={
+            isLocal
+              ? "이 브라우저에 저장된 기록이 모두 지워지며 복구할 수 없습니다."
+              : "계정과 투두·북로그·블로그 등 모든 두두 서비스의 데이터가 즉시 영구 삭제되며 복구할 수 없습니다. 필요하면 먼저 각 서비스에서 데이터를 내보내 주세요."
           }
           confirmLabel="탈퇴"
-          onConfirm={withdraw}
-          onCancel={() => setConfirming(false)}
+          onConfirm={() => run("account")}
+          onCancel={() => setConfirming(null)}
         />
       )}
     </main>

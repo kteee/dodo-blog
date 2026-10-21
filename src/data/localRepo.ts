@@ -85,6 +85,9 @@ export const localRepo: Repo = {
     if (file.size > LIMITS.imageBytes) throw new Error("이미지는 5MB 까지 올릴 수 있어요");
     return toDataUrl(file);
   },
+  async deleteBlogData() {
+    localStorage.removeItem(KEY);
+  },
   async deleteAccount() {
     localStorage.removeItem(KEY);
   },

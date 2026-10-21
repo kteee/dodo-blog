@@ -148,6 +148,10 @@ export default function App() {
             profile={profile}
             onProfile={ready ? actions.updateProfile : null}
             onExport={ready ? actions.exportJson : null}
+            onDeleteBlogData={async () => {
+              if (!actions) throw new Error("not ready");
+              await actions.deleteBlogData();
+            }}
             onDeleteAccount={async () => {
               if (!actions) throw new Error("not ready");
               await actions.deleteAccount();
