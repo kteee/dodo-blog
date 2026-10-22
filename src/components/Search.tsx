@@ -9,12 +9,12 @@ interface Props {
 
 const MAX = 20;
 
-/** 본문에서 검색어 주변 한 줄 (dev-wiki /api/search 의 발췌와 같은 방식) */
-function snippet(body: string, q: string): string | null {
+/** 본문에서 검색어 주변 한 줄 (dev-wiki /api/search 의 발췌와 같은 방식). 검색어가 본문에 없으면 앞부분 */
+function snippet(body: string, q: string): string {
   // 마크다운 기호(#, *, `, > …)는 떼고 본문 글자만
   const text = body.replace(/^#{1,6}\s+/gm, "").replace(/[*_`~>=|]+/g, " ").replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\s+/g, " ");
   const i = text.toLowerCase().indexOf(q);
-  if (i === -1) return null;
+  if (i === -1) return text.slice(0, 90) + (text.length > 90 ? "…" : "");
   const from = Math.max(0, i - 28);
   const to = Math.min(text.length, i + q.length + 48);
   return (from > 0 ? "…" : "") + text.slice(from, to) + (to < text.length ? "…" : "");
@@ -36,12 +36,8 @@ export function Search({ posts, onPick }: Props) {
     const s = q.trim().toLowerCase();
     if (!s) return [];
     return posts
-      .map((p) => {
-        const inTitle = p.title.toLowerCase().includes(s) || p.tags.some((t) => t.toLowerCase().includes(s));
-        const sn = inTitle ? null : snippet(p.body, s);
-        return inTitle || sn ? { p, sn } : null;
-      })
-      .filter((x): x is { p: Post; sn: string | null } => !!x)
+      .filter((p) => p.title.toLowerCase().includes(s) || p.tags.some((t) => t.toLowerCase().includes(s)) || p.body.toLowerCase().includes(s))
+      .map((p) => ({ p, sn: snippet(p.body, s) }))
       .slice(0, MAX);
   }, [q, posts]);
 
@@ -108,9 +104,6 @@ export function Search({ posts, onPick }: Props) {
           }
         }}
       />
-      <span className="search-kbd" aria-hidden="true">
-        Ctrl K
-      </span>
       {open && q.trim() && (
         <div className="search-pop" role="listbox">
           {results.length === 0 ? (
@@ -125,11 +118,11 @@ export function Search({ posts, onPick }: Props) {
                 onMouseEnter={() => setActive(i)}
                 onClick={() => pick(p)}
               >
-                <span className="search-text">
-                  <b>{p.title || "제목 없음"}</b>
-                  {sn && <small>{sn}</small>}
+                <span className="sr-title">{p.title || "제목 없음"}</span>
+                <span className="sr-snippet">
+                  {p.status === "draft" ? "임시글 · " : postDate(p) + " · "}
+                  {sn}
                 </span>
-                <span className="search-meta">{p.status === "draft" ? "임시글" : postDate(p)}</span>
               </button>
             ))
           )}
