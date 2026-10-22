@@ -22,7 +22,8 @@ interface Props {
  */
 export function CategoryTree({ handle, categories, posts, selected: selectedIn, onSelect, currentPostId, isOwner }: Props) {
   // "__x" = 태그·달 필터 중이라 트리엔 선택 표시 없음. "전체 보기"는 헤더의 블로그 제목이 맡음 (사이드바에 전체 줄 없음)
-  const selected: string | null = selectedIn === "__x" ? null : selectedIn;
+  // 글을 보는 중엔 카테고리 강조 없이 그 글만 진하게 (둘 다 켜지면 두 개를 고른 것처럼 보임). 필터 자체는 유지
+  const selected: string | null = selectedIn === "__x" || currentPostId ? null : selectedIn;
 
   const visible = (p: Post) => isOwner || p.status === "public";
   const uncategorized = posts.filter((p) => visible(p) && !p.categoryId).length;
