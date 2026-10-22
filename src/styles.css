@@ -788,3 +788,14 @@ details[open] > summary .ct-chev svg{transform:rotate(90deg)}
 .ed-cat{flex:none; max-width:46%; background:var(--bg); border:1px solid var(--line-2); border-radius:7px; padding:5px 8px; font-size:12.5px; color:var(--ink-2)}
 .ed-meta .ed-tags{flex:1; margin:0; padding:6px 0}
 @media (max-width:640px){ .ed-meta{flex-wrap:wrap} .ed-cat{max-width:100%; font-size:16px} }
+
+/* ══ dev-wiki 와 가로 위치 맞춤 (PC): 바깥 거터 없음, 사이드바·로고 안쪽 24px, 본문 글은 x=308(260+48)부터 ══ */
+@media (min-width:821px){
+  .page{padding-left:0; padding-right:0}
+  .logo{padding-left:24px}
+  .topnav-main{padding-right:24px}
+  .side{padding-left:24px; padding-right:16px}
+  .side-top{margin-right:-6px}
+  .main{padding-right:24px}
+  .toc{padding-right:0}
+}
