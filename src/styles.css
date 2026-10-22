@@ -862,3 +862,16 @@ summary.ct-row:hover .ct-chev{color:var(--ink)}
 .breadcrumb a:hover{color:#52525b}
 .breadcrumb .sep{margin:0 .35em}
 .ctree, .side .cats, .side .sect-label, .breadcrumb{line-height:1.65} /* dev-wiki body line-height → 줄 높이 35px */
+
+/* dev-wiki .btn (상단 "+ 새 문서" 버튼): 흰 알약 + 회색 테두리 */
+.wbtn{
+  display:inline-flex; align-items:center; padding:.45rem .95rem; border:1px solid #dcdce2; border-radius:999px;
+  background:var(--bg); color:#18181b; font-size:.85rem; font-weight:500; line-height:1.65; white-space:nowrap; cursor:pointer;
+  transition:background .15s, border-color .15s, transform .1s;
+}
+.wbtn:hover{background:#fafafa; border-color:#7a7a85}
+.wbtn:active{transform:scale(.97)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .wbtn{border-color:var(--line-2); color:var(--ink)} :root:not([data-theme="light"]) .wbtn:hover{background:var(--panel); border-color:var(--ink-3)} }
+:root[data-theme="dark"] .wbtn{border-color:var(--line-2); color:var(--ink)}
+:root[data-theme="dark"] .wbtn:hover{background:var(--panel); border-color:var(--ink-3)}
+.toolbar .wbtn + .wbtn{margin-left:-4px} /* dev-wiki 버튼 사이 .5rem (툴바 gap 12px → 8px) */

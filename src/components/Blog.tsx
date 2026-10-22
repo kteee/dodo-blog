@@ -115,13 +115,13 @@ export function PostList({ profile, posts, categories, filter, isOwner, onNew, o
         </h1>
         <span className="spacer" />
         {isOwner && onImport && (
-          <button className="btn quiet sm" onClick={onImport}>
+          <button className="wbtn" onClick={onImport}>
             가져오기
           </button>
         )}
         {isOwner && onNew && (
-          <button className="btn primary" onClick={onNew}>
-            ＋ 새 글
+          <button className="wbtn" onClick={onNew}>
+            + 새 글
           </button>
         )}
       </div>
