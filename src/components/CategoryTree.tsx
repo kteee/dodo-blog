@@ -26,10 +26,6 @@ export function CategoryTree({ handle, categories, posts, selected: selectedIn, 
   const selected: string | null = noneSelected ? null : selectedIn;
 
   const visible = (p: Post) => isOwner || p.status === "public";
-  const countIn = (id: string) => {
-    const ids = subtreeIds(categories, id);
-    return posts.filter((p) => visible(p) && p.categoryId && ids.has(p.categoryId)).length;
-  };
   const uncategorized = posts.filter((p) => visible(p) && !p.categoryId).length;
   const currentPost = posts.find((p) => p.id === currentPostId);
   const openIds = new Set<string>();
@@ -51,15 +47,12 @@ export function CategoryTree({ handle, categories, posts, selected: selectedIn, 
     </li>
   );
 
-  const nameRow = (c: Category) => {
-    const n = countIn(c.id);
-    return (
-      <button className={"ct-name" + (selected === c.id ? " on" : "")} onClick={() => onSelect(selected === c.id ? null : c.id)}>
-        <span className="nm">{c.name}</span>
-        <span className="n">{n}</span>
-      </button>
-    );
-  };
+  // 글 수는 안 보여줌 (사용자 요청). 숫자는 관리 페이지 표에만
+  const nameRow = (c: Category) => (
+    <button className={"ct-name" + (selected === c.id ? " on" : "")} onClick={() => onSelect(selected === c.id ? null : c.id)}>
+      <span className="nm">{c.name}</span>
+    </button>
+  );
 
   const renderChildren = (parentId: string, depth: number) => {
     const kids = childrenOf(categories, parentId);
@@ -105,7 +98,6 @@ export function CategoryTree({ handle, categories, posts, selected: selectedIn, 
           <li className="ct-cat">
             <button className={"ct-name" + (selected === "__none" ? " on" : "")} onClick={() => onSelect(selected === "__none" ? null : "__none")}>
               <span className="nm">미분류</span>
-              <span className="n">{uncategorized}</span>
             </button>
           </li>
         )}
