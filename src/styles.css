@@ -913,3 +913,9 @@ summary.ct-row:hover .ct-chev{color:var(--ink)}
   .toc li a:hover{color:#52525b}
 }
 .toc-title{font-weight:700; font-size:.78rem; letter-spacing:.03em; text-transform:uppercase; color:var(--crumb); margin-bottom:.7rem}
+/* dev-wiki 와 실측 맞춤: 목차 열은 화면 오른쪽 끝까지(오른쪽 거터 없음), 본문 열 위쪽 여백 2rem(헤더 아래 32px) */
+@media (min-width:821px){
+  .main{padding-right:0; padding-top:8px}
+}
+/* 목록 화면 본문 폭: dev-wiki .content(최대 1080, 좌우 3rem) 안쪽 = 984px */
+@media (min-width:821px){ .main > .toolbar, .main > .scroll{max-width:984px} }
