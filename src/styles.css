@@ -750,7 +750,6 @@ th.vt-cell{background:var(--panel-2); font-weight:500; text-align:left}
 .ct-name.on{background:var(--panel-2); color:var(--ink); font-weight:500}
 .ct-name .nm{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .ct-name .n{font-family:var(--mono); font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums}
-.ct-name.all{margin-bottom:6px}
 /* 접히는 줄: 화살표 + 이름 (summary 기본 마커는 숨김) */
 summary.ct-row{list-style:none; cursor:pointer}
 summary.ct-row::-webkit-details-marker{display:none}

@@ -21,9 +21,8 @@ interface Props {
  * 관리(추가·이름·순서·상위·삭제)는 /blog/categories 페이지에서 — 주인에겐 맨 아래 "카테고리 관리" 링크.
  */
 export function CategoryTree({ handle, categories, posts, selected: selectedIn, onSelect, currentPostId, isOwner }: Props) {
-  // "__x" = 태그·달 필터 중이라 트리엔 선택 표시 없음 ("전체" 도 아님)
-  const noneSelected = selectedIn === "__x";
-  const selected: string | null = noneSelected ? null : selectedIn;
+  // "__x" = 태그·달 필터 중이라 트리엔 선택 표시 없음. "전체 보기"는 헤더의 블로그 제목이 맡음 (사이드바에 전체 줄 없음)
+  const selected: string | null = selectedIn === "__x" ? null : selectedIn;
 
   const visible = (p: Post) => isOwner || p.status === "public";
   const uncategorized = posts.filter((p) => visible(p) && !p.categoryId).length;
@@ -82,12 +81,6 @@ export function CategoryTree({ handle, categories, posts, selected: selectedIn, 
   return (
     <nav className="ctree" aria-label="카테고리">
       <ul className="ct-list top">
-        <li className="ct-cat">
-          <button className={"ct-name all" + (selected === null && !noneSelected ? " on" : "")} onClick={() => onSelect(null)}>
-            <span className="nm">전체</span>
-            <span className="n">{posts.filter(visible).length}</span>
-          </button>
-        </li>
         {tops.map((c) => (
           <li key={c.id} className="ct-cat top">
             <div className="ct-row top">{nameRow(c)}</div>

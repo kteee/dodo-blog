@@ -6,7 +6,7 @@ import { app } from "../lib/paths";
 
 interface Props {
   /** 공개 블로그 화면: 워드마크(DoDo·BLOG) 대신 그 블로그 제목. 누르면 블로그 홈 */
-  brand?: { title: string; href: string };
+  brand?: { title: string; href: string; onClick?: () => void };
   /** 로고 오른쪽(본문 열)에 들어갈 검색창 (블로그 화면에서만) */
   search?: ReactNode;
   account: Account | null;
@@ -85,7 +85,15 @@ export function TopNav({ brand, search, account, isLocal, myBlog, menuOpen, setM
   );
   return (
     <header className="topnav">
-      <a className="logo" href={brand ? brand.href : app()} onClick={onLinkClick}>
+      <a
+        className="logo"
+        href={brand ? brand.href : app()}
+        onClick={(e) => {
+          onLinkClick(e);
+          if (!e.defaultPrevented) return;
+          brand?.onClick?.(); // 블로그 제목 = 전체 보기 (필터 초기화)
+        }}
+      >
         {brand ? (
           // 공개 블로그: 로고 마크 없이 블로그 제목만
           <span className="word btitle" title={brand.title}>

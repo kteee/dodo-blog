@@ -137,7 +137,7 @@ export default function App() {
   // 공개 블로그 화면(/@아이디)에선 헤더 워드마크 자리에 그 블로그 제목 (앱 화면은 시리즈 규칙대로 DoDo·BLOG)
   const blog = isOwner && profile ? { profile, posts, categories } : pub.data?.blog ?? null;
   const current = handle && slug ? blog?.posts.find((p) => p.slug === slug) ?? null : null;
-  const brand = !isApp && blog ? { title: blog.profile.title, href: blogHome(blog.profile.handle) } : undefined;
+  const brand = !isApp && blog ? { title: blog.profile.title, href: blogHome(blog.profile.handle), onClick: () => setFilter(NO_FILTER) } : undefined;
   // 블로그 화면 헤더 검색: 그 블로그의 글 (주인이면 임시글도 — 고르면 에디터로)
   const search = !isApp && blog ? (
     <Search posts={blog.posts} onPick={(p) => go(p.status === "public" ? postUrl(blog.profile.handle, p.slug) : app("/edit/" + p.id))} />
