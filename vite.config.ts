@@ -30,6 +30,9 @@ function blogRoutesDev(): Plugin {
 
 export default defineConfig({
   base: "/blog/",
+  // 결과를 dist/blog/ 에 — Workers 에셋은 요청 경로 그대로 파일을 찾으므로 /blog/assets/… 가 실제 파일이어야 함.
+  // 루트 index.html(SPA 폴백용)·_headers 는 scripts/postbuild.mjs 가 복사
+  build: { outDir: "dist/blog", emptyOutDir: true },
   plugins: [react(), blogRoutesDev()],
   // 투두(5175)·북로그(5177)·홈(5178)과 동시에 띄울 수 있게 다른 포트
   server: { port: 5180, strictPort: true },

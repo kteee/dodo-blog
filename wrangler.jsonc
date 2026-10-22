@@ -11,10 +11,15 @@
   "workers_dev": false,
   "routes": [
     { "pattern": "dododiary.com/@*", "zone_name": "dododiary.com" },
+    // Workers 에셋 계층이 /@아이디 를 /%40아이디 로 정규화 리다이렉트하므로 그 형태도 이 Worker 가 받아야 함 (앱이 %40 을 @ 로 풀어 읽음)
+    { "pattern": "dododiary.com/%40*", "zone_name": "dododiary.com" },
     { "pattern": "dododiary.com/blog*", "zone_name": "dododiary.com" }
   ],
   "assets": {
+    // dist/index.html(폴백) + dist/_headers + dist/blog/{index.html,assets,favicon.svg} — scripts/postbuild.mjs 참고
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    // /blog ↔ /blog/ 트레일링 슬래시 리다이렉트 없이 그대로 (주소가 바뀌지 않게). 파일이 없으면 SPA 폴백
+    "html_handling": "none"
   }
 }

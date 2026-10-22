@@ -96,7 +96,8 @@ http://localhost:5180/blog (투두 5175 · 북로그 5177 · 홈 5178). `/` 는 
 2. Cloudflare 대시보드 → **Workers & Pages → Create → Workers → Import a repository** → `dodo-blog` 선택
    - Build command `npm run build`, Deploy command `npx wrangler deploy`
    - `wrangler.jsonc` 의 `routes` 가 배포 때 같이 등록된다 (`zone_name: dododiary.com`). 대시보드에서 확인: Worker → Settings → **Domains & Routes** 에 `dododiary.com/@*`, `dododiary.com/blog*` 두 줄
-   - 등록이 안 됐으면 거기서 **Add → Route** 로 같은 패턴 두 개를 Zone `dododiary.com` 에 직접 추가
+   - 등록이 안 됐으면 거기서 **Add → Route** 로 같은 패턴을 Zone `dododiary.com` 에 직접 추가. `dododiary.com/%40*` 도 필요 — Workers 에셋 계층이 `/@아이디` 를 `/%40아이디` 로 정규화 리다이렉트하기 때문
+   - 빌드 결과는 `dist/blog/…`(에셋·favicon) + `dist/index.html`(SPA 폴백) + `dist/_headers` — 요청 경로가 곧 파일 경로라서 (`scripts/postbuild.mjs`)
    - `workers_dev: false` 라 `*.workers.dev` 주소는 안 생김
 3. **빌드용 변수** (Settings → Build → Variables and secrets):
    `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SENTRY_DSN`(선택), `NODE_VERSION=22`
@@ -145,8 +146,9 @@ src/
 supabase/schema.sql       전체 스키마 (= migrations/001_blog.sql)
 supabase/migrations/      001 테이블·RLS·상한·버킷, 002 30일 파기(pg_cron)
 public/_headers           CSP(img-src https: — 글에 적은 외부 이미지 허용)·HSTS·캐시 규칙 (/blog/assets/*)
-vite.config.ts            base /blog/ + 개발 서버용 /@… 폴백·/ → /blog 리다이렉트
-wrangler.jsonc            라우트 dododiary.com/@* · /blog*
+vite.config.ts            base /blog/, outDir dist/blog + 개발 서버용 /@… 폴백·/ → /blog 리다이렉트
+scripts/postbuild.mjs     dist/blog/index.html → dist/index.html(SPA 폴백), _headers 를 dist 루트로
+wrangler.jsonc            라우트 dododiary.com/@* · /%40* · /blog*, html_handling none
 ```
 
 ## 안정성 (투두와 같은 규칙)
