@@ -8,7 +8,6 @@ import { TablePanel } from "./TablePanel";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { usePhone } from "../hooks/usePhone";
 import { onLinkClick } from "../hooks/useRoute";
-import { FontMenu } from "./Blog";
 import { report } from "../lib/monitoring";
 import { blogHome, postUrl, showUrl } from "../lib/paths";
 
@@ -399,7 +398,6 @@ export function Editor({ profile, post, actions, unfold, onBack }: Props) {
             </div>
           )}
         </span>
-        <FontMenu />
       </div>
 
       {slugEdit !== null && (

@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import type { Post, Profile } from "../lib/types";
 import { excerpt, fmtDate, monthKey, postDate, sortPosts } from "../lib/types";
 import { go, onLinkClick } from "../hooks/useRoute";
 import { Markdown, Toc, useMarkdown } from "./Markdown";
-import { OptionsMenu } from "./OptionsMenu";
-import { FONTS, readFont, saveFont, type Font } from "../lib/font";
 import { app, blogHome, postUrl } from "../lib/paths";
 
 export interface Filter {
@@ -106,32 +104,6 @@ export function BlogSide({ posts, filter, onFilter, isOwner }: SideProps) {
   );
 }
 
-/* ── 툴바 오른쪽 끝의 설정(⚙): 글꼴 (투두와 같은 모양) ── */
-export function FontMenu() {
-  const [font, setFont] = useState<Font>(readFont);
-  return (
-    <OptionsMenu>
-      <p className="optsec">글꼴</p>
-      <div className="optseg" role="radiogroup" aria-label="글꼴">
-        {FONTS.map(([f, name]) => (
-          <button
-            key={f}
-            role="radio"
-            aria-checked={font === f}
-            data-font-preview={f}
-            onClick={() => {
-              setFont(f);
-              saveFont(f);
-            }}
-          >
-            {name}
-          </button>
-        ))}
-      </div>
-    </OptionsMenu>
-  );
-}
-
 /* ── 글 목록 ── */
 interface ListProps {
   profile: Profile;
@@ -174,7 +146,6 @@ export function PostList({ profile, posts, filter, isOwner, unfold, onNew, onImp
             ＋ 새 글
           </button>
         )}
-        <FontMenu />
       </div>
       <div className="scroll">
         {list.length === 0 ? (
@@ -259,7 +230,6 @@ export function PostView({ profile, post, isOwner, unfold, onEdit }: ViewProps) 
             수정
           </button>
         )}
-        <FontMenu />
       </div>
       <div className="postwrap">
         <div className="post">

@@ -1,10 +1,14 @@
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Account } from "../data/auth";
+import { usePhone } from "../hooks/usePhone";
 import { onLinkClick } from "../hooks/useRoute";
 import { app } from "../lib/paths";
 
 interface Props {
   /** 공개 블로그 화면: 워드마크(DoDo·BLOG) 대신 그 블로그 제목. 누르면 블로그 홈 */
   brand?: { title: string; href: string };
+  /** 로고 오른쪽(본문 열)에 들어갈 검색창 (블로그 화면에서만) */
+  search?: ReactNode;
   account: Account | null;
   isLocal: boolean;
   /** 로그인했고 블로그를 만들었으면 그 주소 (/<아이디>) */
@@ -38,28 +42,70 @@ export function GoogleButton({ onClick, size = "md" }: { onClick: () => void; si
 }
 
 /** 헤더 — 투두 TopNav 와 같은 구조: 왼쪽 열(로고) | 오른쪽 열(프로필). 남의 블로그를 보는 손님에겐 작은 로그인 버튼 */
-export function TopNav({ brand, account, isLocal, myBlog, menuOpen, setMenuOpen, onSignIn, onSignOut }: Props) {
+export function TopNav({ brand, search, account, isLocal, myBlog, menuOpen, setMenuOpen, onSignIn, onSignOut }: Props) {
+  // 폰: 검색창 대신 돋보기 버튼(프로필 왼쪽). 누르면 아래 줄에 검색창이 열리고 바로 입력 가능 (북로그와 같음)
+  const phone = usePhone();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const row = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!searchOpen) return;
+    row.current?.querySelector("input")?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSearchOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [searchOpen]);
+  const searchSlot = !search ? null : !phone ? (
+    search
+  ) : (
+    <>
+      {searchOpen && (
+        <div
+          ref={row}
+          className="search-row"
+          onBlur={(e) => {
+            const input = row.current?.querySelector("input");
+            if (!row.current?.contains(e.relatedTarget as Node) && !input?.value) setSearchOpen(false);
+          }}
+        >
+          {search}
+          <button className="search-close" onClick={() => setSearchOpen(false)}>
+            취소
+          </button>
+        </div>
+      )}
+      <button className="search-btn" aria-label="글 검색" aria-expanded={searchOpen} onClick={() => setSearchOpen((o) => !o)}>
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <circle cx="7" cy="7" r="4.5" />
+          <path d="M10.5 10.5L14 14" />
+        </svg>
+      </button>
+    </>
+  );
   return (
     <header className="topnav">
       <a className="logo" href={brand ? brand.href : app()} onClick={onLinkClick}>
-        <span className="mark" aria-hidden="true">
-          {/* 탭 아이콘(favicon.svg)과 같은 좌표·비율: 네모를 꽉 채운 24 기준 (연필 + 밑줄) */}
-          <svg viewBox="0 0 24 24">
-            <path d="M7 17.2h10M7.6 13.6l6.9-6.9a1.4 1.4 0 0 1 2 2l-6.9 6.9-2.9.9z" />
-          </svg>
-        </span>
         {brand ? (
+          // 공개 블로그: 로고 마크 없이 블로그 제목만
           <span className="word btitle" title={brand.title}>
             {brand.title}
           </span>
         ) : (
           <>
+            <span className="mark" aria-hidden="true">
+              {/* 탭 아이콘(favicon.svg)과 같은 좌표·비율: 네모를 꽉 채운 24 기준 (연필 + 밑줄) */}
+              <svg viewBox="0 0 24 24">
+                <path d="M7 17.2h10M7.6 13.6l6.9-6.9a1.4 1.4 0 0 1 2 2l-6.9 6.9-2.9.9z" />
+              </svg>
+            </span>
             <span className="word">DoDo</span>
             <span className="tag">blog</span>
           </>
         )}
       </a>
       <div className="topnav-main">
+        {searchSlot}
         <div className="acct">
           {!account ? (
             !isLocal && <GoogleButton size="sm" onClick={onSignIn} />

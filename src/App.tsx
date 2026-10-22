@@ -13,7 +13,8 @@ import { Toasts } from "./components/Toasts";
 import { BlogSide, NO_FILTER, PostList, PostView, type Filter } from "./components/Blog";
 import { Editor } from "./components/Editor";
 import { ImportPage } from "./components/Import";
-import { APP, app, blogHome } from "./lib/paths";
+import { Search } from "./components/Search";
+import { APP, app, blogHome, postUrl } from "./lib/paths";
 import { report } from "./lib/monitoring";
 
 /* 보기 옵션은 이 브라우저에만 기억 (저장이 막혀도 기본값으로 동작) */
@@ -135,8 +136,12 @@ export default function App() {
   // 공개 블로그 화면(/@아이디)에선 헤더 워드마크 자리에 그 블로그 제목 (앱 화면은 시리즈 규칙대로 DoDo·BLOG)
   const blog = isOwner && profile ? { profile, posts } : pub.data?.blog ?? null;
   const brand = !isApp && blog ? { title: blog.profile.title, href: blogHome(blog.profile.handle) } : undefined;
+  // 블로그 화면 헤더 검색: 그 블로그의 글 (주인이면 임시글도 — 고르면 에디터로)
+  const search = !isApp && blog ? (
+    <Search posts={blog.posts} onPick={(p) => go(p.status === "public" ? postUrl(blog.profile.handle, p.slug) : app("/edit/" + p.id))} />
+  ) : undefined;
   const nav = (
-    <TopNav brand={brand} account={account} isLocal={isLocal} myBlog={profile ? blogHome(profile.handle) : null} menuOpen={menuOpen} setMenuOpen={setMenuOpen} onSignIn={() => signIn()} onSignOut={() => signOut()} />
+    <TopNav brand={brand} search={search} account={account} isLocal={isLocal} myBlog={profile ? blogHome(profile.handle) : null} menuOpen={menuOpen} setMenuOpen={setMenuOpen} onSignIn={() => signIn()} onSignOut={() => signOut()} />
   );
   const loading = (
     <div className="gate">
