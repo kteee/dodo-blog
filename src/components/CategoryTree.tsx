@@ -64,10 +64,11 @@ export function CategoryTree({ handle, categories, posts, selected: selectedIn, 
           <li key={c.id} className="ct-cat">
             <details open={openIds.has(c.id) || undefined}>
               <summary className="ct-row">
+                {nameRow(c)}
+                {/* dev-wiki 처럼 화살표는 줄 오른쪽 끝 */}
                 <span className="ct-chev" aria-hidden="true">
                   <svg viewBox="0 0 16 16"><path d="M5 3l5 5-5 5" /></svg>
                 </span>
-                {nameRow(c)}
               </summary>
               {renderChildren(c.id, depth + 1)}
             </details>

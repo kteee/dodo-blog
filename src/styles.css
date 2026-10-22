@@ -824,3 +824,41 @@ details[open] > summary .ct-chev svg{transform:rotate(90deg)}
 
 /* 사이드바 hover 배경 더 연하게 (--panel 과 --panel-2 의 중간). 고른 줄(.on)은 그대로 --panel-2 */
 .ct-name:hover, .ct-link:hover, .side .cat:hover{background:color-mix(in oklab, var(--panel) 65%, var(--panel-2))}
+
+/* ══ 사이드바·경로: dev-wiki 와 같은 크기·간격·색 ══
+   dev-wiki .sidebar: 글자 .83rem, 줄 안쪽 .4rem .6rem, 줄 사이 .1rem, 하위 들여쓰기 1rem, 1단계 사이 .35rem,
+   글자색 #55555f, hover 배경 #fafafa, 고른 줄 #eeeef1 + 600, 화살표는 오른쪽 #a5a5ae */
+:root{--side-ink:#55555f; --side-hover:#fafafa; --side-on:#eeeef1; --side-chev:#a5a5ae; --crumb:#7a7a85}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--side-ink:var(--ink-2); --side-hover:var(--panel); --side-on:var(--panel-2); --side-chev:var(--ink-3); --crumb:var(--ink-3)} }
+:root[data-theme="dark"]{--side-ink:var(--ink-2); --side-hover:var(--panel); --side-on:var(--panel-2); --side-chev:var(--ink-3); --crumb:var(--ink-3)}
+.side{gap:20px}
+.ctree{font-size:.83rem}
+.ct-list{gap:0}
+.ct-list > li{margin:.1rem 0}
+.ct-list .ct-list{padding-left:1rem}
+.ct-cat.top + .ct-cat.top{margin-top:.35rem}
+.ct-row.top{padding:0}
+.ct-row.top .ct-name, .ct-row.top .ct-name:hover, .ct-row.top .ct-name.on{
+  font-size:.83rem; font-weight:600; letter-spacing:0; text-transform:none; color:var(--side-ink); padding:.4rem .6rem; background:none;
+}
+.ct-row.top .ct-name.on{color:var(--ink)}
+.ct-name{padding:.4rem .6rem; border-radius:7px; font-size:.83rem; color:var(--side-ink); gap:.5rem}
+.ct-name:hover, .ct-link:hover, .side .cat:hover{background:var(--side-hover); color:var(--ink)}
+.ct-name.on, .ct-link.on, .side .cat.on{background:var(--side-on); color:var(--ink); font-weight:600}
+/* 접히는 줄: 줄 전체가 hover, 화살표 오른쪽 */
+summary.ct-row{border-radius:7px; gap:0}
+summary.ct-row:hover{background:var(--side-hover)}
+summary.ct-row:hover .ct-name{background:none; color:var(--ink)}
+summary.ct-row .ct-name{padding-right:0}
+.ct-chev{width:auto; padding:0 .6rem 0 .5rem; height:auto; color:var(--side-chev)}
+summary.ct-row:hover .ct-chev{color:var(--ink)}
+.ct-link{margin-left:0; padding:.4rem .6rem; border-radius:7px; font-size:.83rem; color:var(--side-ink)}
+.side .cat{padding:.4rem .6rem; border-radius:7px; font-size:.83rem; color:var(--side-ink)}
+.side .sect-label{font-size:.83rem; font-weight:600; color:var(--side-ink); margin:0; padding:.4rem .6rem; letter-spacing:0}
+/* 글 보기 위 경로 (dev-wiki .breadcrumb: .85rem, 회색, 구분 /) */
+.page-head{padding-bottom:20px}
+.breadcrumb{font-size:.85rem; color:var(--crumb); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.breadcrumb a{color:var(--crumb); text-decoration:none}
+.breadcrumb a:hover{color:#52525b}
+.breadcrumb .sep{margin:0 .35em}
+.ctree, .side .cats, .side .sect-label, .breadcrumb{line-height:1.65} /* dev-wiki body line-height → 줄 높이 35px */

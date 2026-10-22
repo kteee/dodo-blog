@@ -207,10 +207,21 @@ export function PostView({ profile, post, categories, onCategory, isOwner, onEdi
 
   return (
     <>
-      <div className="toolbar">
-        <a className="crumb" href={home} onClick={onLinkClick}>
-          ← {profile.title}
-        </a>
+      {/* dev-wiki .page-head: 왼쪽 경로(홈 / 카테고리… / 글 제목), 오른쪽 수정 */}
+      <div className="toolbar page-head">
+        <nav className="breadcrumb" aria-label="경로">
+          <a href={home} onClick={onLinkClick}>
+            홈
+          </a>
+          {crumbs.map((c) => (
+            <span key={c.id}>
+              <span className="sep">/</span>
+              <a href={home} onClick={(e) => { e.preventDefault(); onCategory?.(c.id); }}>{c.name}</a>
+            </span>
+          ))}
+          <span className="sep">/</span>
+          <span className="cur">{post.title || "제목 없음"}</span>
+        </nav>
         <span className="spacer" />
         {isOwner && onEdit && (
           <button className="btn sm" onClick={onEdit}>
@@ -221,16 +232,6 @@ export function PostView({ profile, post, categories, onCategory, isOwner, onEdi
       <div className="postwrap">
         <div className="post">
           <header className="post-head">
-            {crumbs.length > 0 && (
-              <p className="post-crumbs">
-                {crumbs.map((c, i) => (
-                  <span key={c.id}>
-                    {i > 0 && <span className="sep">/</span>}
-                    <a href={home} onClick={(e) => { e.preventDefault(); onCategory?.(c.id); }}>{c.name}</a>
-                  </span>
-                ))}
-              </p>
-            )}
             <h1 className="post-h1">{post.title || "제목 없음"}</h1>
             <p className="post-meta">
               <time dateTime={dateOf(post)}>{fmtDate(dateOf(post))}</time>
