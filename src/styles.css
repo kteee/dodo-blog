@@ -720,7 +720,7 @@ th.vt-cell{background:var(--panel-2); font-weight:500; text-align:left}
 }
 /* ══ 헤더 검색: dev-wiki 검색창 모양 (알약 입력칸 + 둥근 결과 상자, 제목 + 발췌 한 줄) ══ */
 .search{width:min(420px, 40vw)}
-.search input{height:38px; padding:0 14px 0 38px; border:1px solid transparent; border-radius:999px; background:var(--panel); font-size:14px}
+.search input{height:38px; padding:0 14px 0 38px; border:1px solid var(--line-2); border-radius:999px; background:var(--panel); font-size:14px}
 .search input:focus{background:var(--bg); border-color:var(--ink-2); box-shadow:0 0 0 2px rgba(0,0,0,.06)}
 .search-ico{left:14px; width:14px; height:14px}
 .search-kbd{display:none}
