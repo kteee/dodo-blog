@@ -132,8 +132,11 @@ export default function App() {
   }, [handle]);
 
   const account = auth.status === "in" ? auth.account : null;
+  // 공개 블로그 화면(/@아이디)에선 헤더 워드마크 자리에 그 블로그 제목 (앱 화면은 시리즈 규칙대로 DoDo·BLOG)
+  const blog = isOwner && profile ? { profile, posts } : pub.data?.blog ?? null;
+  const brand = !isApp && blog ? { title: blog.profile.title, href: blogHome(blog.profile.handle) } : undefined;
   const nav = (
-    <TopNav account={account} isLocal={isLocal} myBlog={profile ? blogHome(profile.handle) : null} menuOpen={menuOpen} setMenuOpen={setMenuOpen} onSignIn={() => signIn()} onSignOut={() => signOut()} />
+    <TopNav brand={brand} account={account} isLocal={isLocal} myBlog={profile ? blogHome(profile.handle) : null} menuOpen={menuOpen} setMenuOpen={setMenuOpen} onSignIn={() => signIn()} onSignOut={() => signOut()} />
   );
   const loading = (
     <div className="gate">
@@ -218,7 +221,6 @@ export default function App() {
   }
 
   /* ── 블로그 화면 (/<handle>, /<handle>/<slug>) — 누구나 ── */
-  const blog = isOwner && profile ? { profile, posts } : pub.data?.blog ?? null;
   const unfold = sideFolded ? (
     <button className="side-tg" aria-label="사이드바 펼치기" title="펼치기" onClick={toggleSide}>
       <SideIcon />

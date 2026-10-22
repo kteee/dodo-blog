@@ -766,3 +766,6 @@ th.vt-cell{background:var(--panel-2); font-weight:500; text-align:left}
 /* 에디터: 사이드 없이 한 열 */
 .app.one{grid-template-columns:minmax(0,1fr)}
 .mypage-sub{margin:26px 0 8px; font-size:12px; font-weight:600; letter-spacing:.04em; color:var(--ink-3)} /* "두두 계정" 구역 제목 (투두와 같음) */
+/* 공개 블로그 화면 헤더: 워드마크 자리에 블로그 제목 (같은 15px·600, 길면 말줄임) */
+.logo .word.btitle{max-width:min(320px, 50vw); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+@media (max-width:640px){ .logo .word.btitle{max-width:calc(100vw - 150px)} }

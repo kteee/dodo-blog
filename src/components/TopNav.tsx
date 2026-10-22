@@ -3,6 +3,8 @@ import { onLinkClick } from "../hooks/useRoute";
 import { app } from "../lib/paths";
 
 interface Props {
+  /** 공개 블로그 화면: 워드마크(DoDo·BLOG) 대신 그 블로그 제목. 누르면 블로그 홈 */
+  brand?: { title: string; href: string };
   account: Account | null;
   isLocal: boolean;
   /** 로그인했고 블로그를 만들었으면 그 주소 (/<아이디>) */
@@ -36,18 +38,26 @@ export function GoogleButton({ onClick, size = "md" }: { onClick: () => void; si
 }
 
 /** 헤더 — 투두 TopNav 와 같은 구조: 왼쪽 열(로고) | 오른쪽 열(프로필). 남의 블로그를 보는 손님에겐 작은 로그인 버튼 */
-export function TopNav({ account, isLocal, myBlog, menuOpen, setMenuOpen, onSignIn, onSignOut }: Props) {
+export function TopNav({ brand, account, isLocal, myBlog, menuOpen, setMenuOpen, onSignIn, onSignOut }: Props) {
   return (
     <header className="topnav">
-      <a className="logo" href={app()} onClick={onLinkClick}>
+      <a className="logo" href={brand ? brand.href : app()} onClick={onLinkClick}>
         <span className="mark" aria-hidden="true">
           {/* 탭 아이콘(favicon.svg)과 같은 좌표·비율: 네모를 꽉 채운 24 기준 (연필 + 밑줄) */}
           <svg viewBox="0 0 24 24">
             <path d="M7 17.2h10M7.6 13.6l6.9-6.9a1.4 1.4 0 0 1 2 2l-6.9 6.9-2.9.9z" />
           </svg>
         </span>
-        <span className="word">DoDo</span>
-        <span className="tag">blog</span>
+        {brand ? (
+          <span className="word btitle" title={brand.title}>
+            {brand.title}
+          </span>
+        ) : (
+          <>
+            <span className="word">DoDo</span>
+            <span className="tag">blog</span>
+          </>
+        )}
       </a>
       <div className="topnav-main">
         <div className="acct">

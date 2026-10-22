@@ -62,7 +62,7 @@ export function CreateBlog({ taken, onCreate }: CreateProps) {
     if (!canSubmit) return;
     setBusy(true);
     try {
-      await onCreate(handle, title.trim() || handle);
+      await onCreate(handle, title.trim() || `${handle}의 블로그`); // 비우면 안내 문구 그대로 (아이디만 덜렁 제목이 되지 않게)
     } catch (e) {
       report(e, "createProfile");
       const d = describeError(e);
