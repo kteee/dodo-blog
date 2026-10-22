@@ -815,3 +815,9 @@ details[open] > summary .ct-chev svg{transform:rotate(90deg)}
   .cat-new{grid-template-columns:1fr 1fr}
   .cat-new input, .cat-new select{font-size:16px}
 }
+
+/* ══ 에디터: dev-wiki 편집 화면처럼 가운데 정렬(최대 900px), 작성|미리보기 탭 ══ */
+.main > .editor{max-width:900px; margin-inline:auto; width:100%}
+.ed-split.both{grid-template-columns:minmax(0,1fr)}
+.ed-body{min-height:60vh}
+.ed-preview{min-height:60vh; background:var(--bg)}

@@ -6,7 +6,6 @@ import { ACTIONS, handleEnter, handleTab, insertCodeBlock, insertTable, replaceR
 import { Markdown, useMarkdown } from "./Markdown";
 import { TablePanel } from "./TablePanel";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { usePhone } from "../hooks/usePhone";
 import { onLinkClick } from "../hooks/useRoute";
 import { report } from "../lib/monitoring";
 import { blogHome, postUrl, showUrl } from "../lib/paths";
@@ -56,7 +55,6 @@ function flatCats(cats: Category[], parentId: string | null = null, depth = 0): 
 }
 
 export function Editor({ profile, post, categories, actions, unfold, onBack }: Props) {
-  const phone = usePhone();
   const [title, setTitle] = useState(post.title);
   const [tagText, setTagText] = useState(post.tags.join(", "));
   const [body, setBody] = useState(post.body);
@@ -344,8 +342,9 @@ export function Editor({ profile, post, categories, actions, unfold, onBack }: P
     </div>
   );
 
-  const showWrite = !phone || tab === "write";
-  const showPreview = !phone || tab === "preview";
+  // dev-wiki 처럼 작성 | 미리보기 탭 (좌우 분할 없음)
+  const showWrite = tab === "write";
+  const showPreview = tab === "preview";
 
   return (
     <div className="editor">
@@ -462,10 +461,10 @@ export function Editor({ profile, post, categories, actions, unfold, onBack }: P
         />
       </div>
 
-      {phone && (
+      {(
         <div className="ed-tabs" role="tablist">
           <button role="tab" aria-selected={tab === "write"} onClick={() => setTab("write")}>
-            쓰기
+            작성
           </button>
           <button role="tab" aria-selected={tab === "preview"} onClick={() => setTab("preview")}>
             미리보기
@@ -486,7 +485,7 @@ export function Editor({ profile, post, categories, actions, unfold, onBack }: P
           onLeave={() => ta.current?.focus()}
         />
       )}
-      <div className={"ed-split" + (showWrite && showPreview ? " both" : "")}>
+      <div className="ed-split">
         {showWrite && (
           <textarea
             ref={ta}
