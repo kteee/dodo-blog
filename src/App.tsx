@@ -263,7 +263,7 @@ export default function App() {
                 <SideIcon />
               </button>
             </div>
-            <BlogSide profile={blog.profile} posts={blog.posts} filter={filter} onFilter={(f) => {
+            <BlogSide posts={blog.posts} filter={filter} onFilter={(f) => {
               setFilter(f);
               if (slug) go(blogHome(blog.profile.handle));
             }} isOwner={isOwner} />

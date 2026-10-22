@@ -556,10 +556,6 @@ select.sel{background:var(--bg); border:1px solid var(--line-2); border-radius:8
 
 /* ── 사이드 행: 태그는 # 글자, 달은 점 ── */
 .cat .hash{width:8px; text-align:center; font-size:11px; color:var(--ink-3)}
-.blog-who{padding:2px 8px 0}
-.blog-title{display:block; font-size:15px; font-weight:600; letter-spacing:-.02em; color:var(--ink); text-decoration:none; line-height:1.4}
-.blog-title:hover{text-decoration:underline}
-.blog-bio{margin:4px 0 0; font-size:12.5px; line-height:1.6; color:var(--ink-2); white-space:pre-wrap; word-break:keep-all}
 
 /* ── 로그인 전 / 블로그 만들기 ── */
 .intro{gap:12px}
@@ -659,7 +655,7 @@ a.post-tag:hover{color:var(--ink); text-decoration:underline}
 .md details{margin:0 0 1em; padding:8px 12px; border:1px solid var(--line); border-radius:8px}
 .md summary{cursor:pointer; font-weight:500}
 .md del{color:var(--ink-3)}
-:root[data-font="serif"] .md h1, :root[data-font="serif"] .md h2, :root[data-font="serif"] .md h3, :root[data-font="serif"] .md h4, :root[data-font="serif"] .post-h1, :root[data-font="serif"] .post-title, :root[data-font="serif"] .blog-title, :root[data-font="serif"] .intro-h{font-weight:700}
+:root[data-font="serif"] .md h1, :root[data-font="serif"] .md h2, :root[data-font="serif"] .md h3, :root[data-font="serif"] .md h4, :root[data-font="serif"] .post-h1, :root[data-font="serif"] .post-title, :root[data-font="serif"] .intro-h{font-weight:700}
 
 /* ── 에디터 ── */
 .editor{display:flex; flex-direction:column; min-height:calc(100vh - 110px)}

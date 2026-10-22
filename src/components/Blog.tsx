@@ -17,15 +17,14 @@ export const NO_FILTER: Filter = { tag: null, month: null };
 /** 글 날짜(공개일, 임시글은 수정일)로 달 묶기 */
 const dateOf = (p: Post) => p.publishedAt ?? p.updatedAt;
 
-/* ── 왼쪽 사이드: 블로그 이름·소개 → 태그 → 달 ── */
+/* ── 왼쪽 사이드: 전체/임시글 → 태그 → 달 (블로그 제목은 헤더에) ── */
 interface SideProps {
-  profile: Profile;
   posts: Post[];
   filter: Filter;
   onFilter: (f: Filter) => void;
   isOwner: boolean;
 }
-export function BlogSide({ profile, posts, filter, onFilter, isOwner }: SideProps) {
+export function BlogSide({ posts, filter, onFilter, isOwner }: SideProps) {
   const pub = posts.filter((p) => p.status === "public");
   const tags = useMemo(() => {
     const m = new Map<string, number>();
@@ -41,15 +40,8 @@ export function BlogSide({ profile, posts, filter, onFilter, isOwner }: SideProp
     return [...m.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
   }, [pub]);
   const drafts = isOwner ? posts.filter((p) => p.status === "draft").length : 0;
-  const home = blogHome(profile.handle);
   return (
     <>
-      <div className="blog-who">
-        <a className="blog-title" href={home} onClick={onLinkClick}>
-          {profile.title}
-        </a>
-        {profile.bio && <p className="blog-bio">{profile.bio}</p>}
-      </div>
       <div>
         <ul className="cats">
           <li>
