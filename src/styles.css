@@ -966,3 +966,8 @@ summary.ct-row:hover .ct-chev{color:var(--ink)}
 /* 글 보기 본문 열: dev-wiki .content 처럼 글 폭 최대 984 (+ 오른쪽 3rem), 그 오른쪽에 목차 240 — 1080 상한은 목록 화면에만 */
 .main > .postwrap{max-width:none}
 @media (min-width:1181px){ .postwrap{grid-template-columns:minmax(0,1032px) 240px; justify-content:space-between} }
+
+/* 에디터 입력칸도 본문과 같은 Noto Sans KR (고정폭 대신) */
+.ed-body{font-family:var(--sans); font-size:15px}
+.ed-body::placeholder{font-family:var(--sans)}
+@media (max-width:640px){ .ed-body{font-size:16px} }
