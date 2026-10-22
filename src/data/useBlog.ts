@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Category, Post, Profile } from "../lib/types";
-import { LIMITS, childrenOf, slugify, subtreeIds, uniqueSlug, utf8Bytes, uuid } from "../lib/types";
+import { LIMITS, MAX_DEPTH, childrenOf, depthOf, slugify, subtreeIds, uniqueSlug, utf8Bytes, uuid } from "../lib/types";
 import type { Repo } from "./repo";
 import { describeError, report } from "../lib/monitoring";
 
@@ -338,44 +338,40 @@ export function useBlog(repo: Repo | null) {
         for (const p of made) save(() => repo.insertPost(p));
         return made.length;
       },
-      /* ── 카테고리 (dev-wiki 폴더) ── */
-      addCategory(name: string, parentId: string | null): string {
+      /* ── 카테고리 (dev-wiki 폴더). 관리는 /blog/categories 페이지 ── */
+      addCategory(name: string, parentId: string | null, order?: number): string {
         const siblings = childrenOf(catsRef.current, parentId);
         const c: Category = {
           id: uuid(),
           name: name.trim().slice(0, LIMITS.category) || "새 카테고리",
           parentId,
-          order: siblings.length ? Math.max(...siblings.map((s) => s.order)) + 1 : 0,
+          order: order ?? (siblings.length ? Math.max(...siblings.map((s) => s.order)) + 1 : 0),
           createdAt: new Date().toISOString(),
         };
         setCategories([...catsRef.current, c]);
         save(() => repo.insertCategory(c));
         return c.id;
       },
-      renameCategory(id: string, name: string) {
+      /** 이름·순서·상위 바꾸기. 안 되는 경우(자기 아래로 옮기기, 깊이 초과)는 안내 문구를 돌려주고 아무것도 안 함 */
+      updateCategory(id: string, patch: Partial<Pick<Category, "name" | "order" | "parentId">>): string | null {
         const c = catsRef.current.find((x) => x.id === id);
-        const n = name.trim().slice(0, LIMITS.category);
-        if (!c || !n || n === c.name) return;
-        setCategories(catsRef.current.map((x) => (x.id === id ? { ...x, name: n } : x)));
-        save(() => repo.updateCategory(id, { name: n }));
-      },
-      /** 같은 부모 안에서 한 칸 위/아래 (이웃과 order 를 맞바꿈) */
-      moveCategory(id: string, dir: -1 | 1) {
-        const c = catsRef.current.find((x) => x.id === id);
-        if (!c) return;
-        const sib = childrenOf(catsRef.current, c.parentId);
-        const i = sib.findIndex((x) => x.id === id);
-        const j = i + dir;
-        if (i < 0 || j < 0 || j >= sib.length) return;
-        // order 가 같은 것끼리(이름순 정렬 상태)는 자리 번호를 새로 매겨서 바꿈
-        const reordered = [...sib];
-        [reordered[i], reordered[j]] = [reordered[j], reordered[i]];
-        const patches = reordered.map((x, k) => ({ id: x.id, order: k })).filter((p) => catsRef.current.find((x) => x.id === p.id)!.order !== p.order);
-        setCategories(catsRef.current.map((x) => {
-          const p = patches.find((q) => q.id === x.id);
-          return p ? { ...x, order: p.order } : x;
-        }));
-        for (const p of patches) save(() => repo.updateCategory(p.id, { order: p.order }));
+        if (!c) return null;
+        const diff: Partial<Pick<Category, "name" | "order" | "parentId">> = {};
+        if (patch.name !== undefined) {
+          const n = patch.name.trim().slice(0, LIMITS.category);
+          if (n && n !== c.name) diff.name = n;
+        }
+        if (patch.order !== undefined && patch.order !== c.order) diff.order = patch.order;
+        if (patch.parentId !== undefined && patch.parentId !== c.parentId) {
+          if (patch.parentId && subtreeIds(catsRef.current, id).has(patch.parentId)) return "자기 자신이나 그 아래로는 옮길 수 없어요.";
+          const mine = Math.max(...[...subtreeIds(catsRef.current, id)].map((x) => depthOf(catsRef.current, x) - depthOf(catsRef.current, id))) + 1;
+          if (depthOf(catsRef.current, patch.parentId) + mine > MAX_DEPTH) return `카테고리는 ${MAX_DEPTH}단계까지만 만들 수 있어요.`;
+          diff.parentId = patch.parentId;
+        }
+        if (!Object.keys(diff).length) return null;
+        setCategories(catsRef.current.map((x) => (x.id === id ? { ...x, ...diff } : x)));
+        save(() => repo.updateCategory(id, diff));
+        return null;
       },
       /** 삭제: 안의 글은 미분류로, 하위 카테고리는 한 단계 위로 올린 뒤 소프트 삭제 */
       deleteCategory(id: string) {

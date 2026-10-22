@@ -764,18 +764,7 @@ details[open] > summary .ct-chev svg{transform:rotate(90deg)}
 .ct-link.on{color:var(--ink); font-weight:500; background:var(--panel-2)}
 .ct-link.draft{color:var(--ink-3); font-style:italic}
 .ct-link.draft::after{content:" · 임시"; font-size:11px; font-style:normal}
-/* 관리 */
-.ct-menu{position:relative; flex:none}
-.ct-more{width:22px; height:22px; border-radius:5px; color:var(--ink-3); font-size:13px; line-height:1; opacity:0}
-.ct-row:hover .ct-more, .ct-more[aria-expanded="true"], .ct-more:focus-visible{opacity:1}
-.ct-more:hover{background:var(--line); color:var(--ink)}
-.ct-menu .minipop{right:auto; left:0; top:calc(100% + 4px); z-index:45}
-.ct-form{padding:2px 4px}
-.ct-form input{width:100%; background:var(--panel); border:1px solid var(--line-2); border-radius:6px; padding:5px 8px; font-size:13px; outline:none}
-.ct-form input:focus{border-color:var(--ink-3)}
-.ctree .addcat{margin-top:6px}
-.ct-addform{padding-left:14px}
-.ct-list.top > .ct-addform{padding-left:0}
+.ctree a.addcat{margin-top:8px; text-decoration:none; font-size:12.5px}
 /* 목록 제목의 상위 경로, 글 머리의 카테고리 경로 */
 .h1 .crumb-pre{font-weight:400; color:var(--ink-3)}
 .h1 .crumb-pre .sep{margin:0 2px}
@@ -798,4 +787,31 @@ details[open] > summary .ct-chev svg{transform:rotate(90deg)}
   .side-top{margin-right:-6px}
   .main{padding-right:24px}
   .toc{padding-right:0}
+}
+
+/* ══ 카테고리 관리 페이지 (/blog/categories) — dev-wiki /categories 표 모양 ══ */
+.catman{max-width:900px}
+.cat-table{width:100%; border-collapse:collapse; font-size:13.5px; margin-bottom:28px}
+.cat-table th{text-align:left; font-size:11.5px; font-weight:500; color:var(--ink-3); padding:0 8px 8px; border-bottom:1px solid var(--line)}
+.cat-table td{padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:middle}
+.cat-table .col-order{width:76px}
+.cat-table .col-count{width:48px; text-align:right}
+.cat-table .cat-count{text-align:right; color:var(--ink-3); font-variant-numeric:tabular-nums}
+.cat-name{display:flex; align-items:center; gap:0}
+.cat-indent{flex:none; display:inline-block}
+.cat-table input, .cat-table select, .cat-new input, .cat-new select{
+  width:100%; padding:6px 8px; border:1px solid var(--line-2); border-radius:6px; background:var(--bg); font-size:13.5px; color:var(--ink); outline:none;
+}
+.cat-table input:focus, .cat-table select:focus, .cat-new input:focus, .cat-new select:focus{border-color:var(--ink-3)}
+.cat-table input.cat-order{width:64px}
+.cat-table select.cat-parent{max-width:220px}
+.cat-table .cat-actions{width:64px; text-align:right}
+.cat-empty{text-align:center; color:var(--ink-3); padding:24px 8px}
+.cat-subhead{margin:0 0 10px; font-size:14px; font-weight:600}
+.cat-new{display:grid; grid-template-columns:minmax(0,1fr) 84px minmax(0,1fr) auto; gap:8px; align-items:center}
+.cat-hint{margin:14px 0 0; font-size:12px; color:var(--ink-3); line-height:1.6}
+@media (max-width:640px){
+  .cat-table th:nth-child(3), .cat-table td:nth-child(3){display:none}
+  .cat-new{grid-template-columns:1fr 1fr}
+  .cat-new input, .cat-new select{font-size:16px}
 }

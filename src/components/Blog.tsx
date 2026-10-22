@@ -1,7 +1,7 @@
 import { useEffect, useMemo, type ReactNode } from "react";
 import type { Category, Post, Profile } from "../lib/types";
 import { excerpt, fmtDate, monthKey, pathOf, postDate, sortPosts, subtreeIds } from "../lib/types";
-import { CategoryTree, type TreeActions } from "./CategoryTree";
+import { CategoryTree } from "./CategoryTree";
 import { go, onLinkClick } from "../hooks/useRoute";
 import { Markdown, Toc, useMarkdown } from "./Markdown";
 import { app, blogHome, postUrl } from "../lib/paths";
@@ -27,9 +27,8 @@ interface SideProps {
   onFilter: (f: Filter) => void;
   currentPostId?: string | null;
   isOwner: boolean;
-  treeActions?: TreeActions;
 }
-export function BlogSide({ handle, posts, categories, filter, onFilter, currentPostId, isOwner, treeActions }: SideProps) {
+export function BlogSide({ handle, posts, categories, filter, onFilter, currentPostId, isOwner }: SideProps) {
   const pub = posts.filter((p) => p.status === "public");
   const tags = useMemo(() => {
     const m = new Map<string, number>();
@@ -55,7 +54,6 @@ export function BlogSide({ handle, posts, categories, filter, onFilter, currentP
         onSelect={(id) => onFilter({ category: id, tag: null, month: null })}
         currentPostId={currentPostId}
         isOwner={isOwner}
-        actions={treeActions}
       />
       <div>
         <ul className="cats">

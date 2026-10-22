@@ -13,6 +13,7 @@ import { Toasts } from "./components/Toasts";
 import { BlogSide, NO_FILTER, PostList, PostView, type Filter } from "./components/Blog";
 import { Editor } from "./components/Editor";
 import { ImportPage } from "./components/Import";
+import { CategoriesPage } from "./components/Categories";
 import { Search } from "./components/Search";
 import { APP, app, blogHome, postUrl } from "./lib/paths";
 import { report } from "./lib/monitoring";
@@ -94,7 +95,7 @@ export default function App() {
   }, [menuOpen]);
   useEffect(() => setMenuOpen(false), [path]);
   useEffect(() => {
-    const noindex = seg[0] === "blog" && ["write", "edit", "import", "my"].includes(seg[1] ?? "");
+    const noindex = seg[0] === "blog" && ["write", "edit", "import", "my", "categories"].includes(seg[1] ?? "");
     let m = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
     if (noindex && !m) {
       m = document.createElement("meta");
@@ -135,7 +136,6 @@ export default function App() {
   const account = auth.status === "in" ? auth.account : null;
   // 공개 블로그 화면(/@아이디)에선 헤더 워드마크 자리에 그 블로그 제목 (앱 화면은 시리즈 규칙대로 DoDo·BLOG)
   const blog = isOwner && profile ? { profile, posts, categories } : pub.data?.blog ?? null;
-  const treeActions = isOwner && actions ? { add: actions.addCategory, rename: actions.renameCategory, move: actions.moveCategory, remove: actions.deleteCategory } : undefined;
   const current = handle && slug ? blog?.posts.find((p) => p.slug === slug) ?? null : null;
   const brand = !isApp && blog ? { title: blog.profile.title, href: blogHome(blog.profile.handle) } : undefined;
   // 블로그 화면 헤더 검색: 그 블로그의 글 (주인이면 임시글도 — 고르면 에디터로)
@@ -194,6 +194,8 @@ export default function App() {
     else if (store.status === "error") main = <RetryGate retry={store.retry} />;
     else if (!profile) {
       main = <CreateBlog taken={(h) => anyRepo!.handleTaken(h)} onCreate={(h, t) => actions!.createProfile(h, t)} />;
+    } else if (sub[0] === "categories" && ready) {
+      main = <CategoriesPage profile={profile} categories={categories} posts={posts} actions={{ add: actions.addCategory, update: actions.updateCategory, remove: actions.deleteCategory }} />;
     } else if (sub[0] === "import" && ready) {
       main = <ImportPage profile={profile} onImport={actions.importPosts} onDone={() => go(blogHome(profile.handle))} />;
     } else if (sub[0] === "edit" && sub[1] && ready) {
@@ -221,7 +223,7 @@ export default function App() {
       <div className="page">
         {nav}
         {editing ? <div className="app one"><main className="main">{main}</main></div> : main}
-        {!editing && sub[0] !== "import" && <SiteFooter />}
+        {!editing && sub[0] !== "import" && sub[0] !== "categories" && <SiteFooter />}
         {store.net.offline && <NetBar n={store.net.waiting} />}
         <Toasts toasts={store.toasts} dismiss={store.dismiss} />
       </div>
@@ -294,7 +296,6 @@ export default function App() {
               }}
               currentPostId={current?.id ?? null}
               isOwner={isOwner}
-              treeActions={treeActions}
             />
           </aside>
         )}
