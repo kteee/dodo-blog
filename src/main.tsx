@@ -7,6 +7,7 @@ import { supabase } from "./data/supabase";
 import { ErrorBoundary } from "./lib/monitoring";
 import "./styles.css";
 import { applyFont, readFont } from "./lib/font";
+import { app } from "./lib/paths";
 
 // 저장해 둔 글꼴을 첫 화면을 그리기 전에 적용 (깜빡임 없이)
 applyFont(readFont());
@@ -32,7 +33,7 @@ const crashed = (
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary fallback={crashed}>
-      {location.pathname.replace(/\/$/, "") === "/privacy" ? (
+      {location.pathname.replace(/\/$/, "") === app("/privacy") ? (
         // 개인정보 처리방침은 로그인·설정과 상관없이 누구나 볼 수 있어야 함
         <>
           <Privacy />

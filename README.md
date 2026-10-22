@@ -1,6 +1,6 @@
 # DoDo blog — 두두 블로그
 
-마크다운으로 쓰는 나만의 블로그. 사용자마다 주소가 하나 — `https://blog.dododiary.com/<아이디>`.
+마크다운으로 쓰는 나만의 블로그. 사용자마다 주소가 하나 — **`https://dododiary.com/@<아이디>`** (브런치·미디엄처럼 브랜드 도메인 바로 밑).
 두두 시리즈의 세 번째 서비스 (투두 → 북로그 → 블로그). "다이어리에 적듯이" — 제목·태그·본문, 임시글/공개 두 가지뿐.
 
 - 프론트: Vite + React + TypeScript (서버 없음, 정적 파일만 배포)
@@ -13,18 +13,19 @@
 
 | 경로 | 내용 |
 |---|---|
-| `/` | 로그인 전: 소개 + Google 로그인. 로그인 후 블로그가 없으면 **아이디·이름 정하기**, 있으면 `/<아이디>` 로 |
-| `/<아이디>` | 글 목록 (공개일 최신순). 왼쪽 사이드: 블로그 이름·소개 → 전체/임시글(주인만) → 태그 → 달. 주인에겐 **＋ 새 글**, **가져오기** |
-| `/<아이디>/<글주소>` | 글 보기. 본문 720px, 넓은 화면(1181px~)엔 오른쪽 목차. 주인에겐 **수정** |
-| `/write` → `/edit/<id>` | 에디터. 제목 · 태그(쉼표) · 툴바 · 본문 textarea \| 미리보기 (폰은 쓰기/미리보기 탭). **0.5초 멈추면 자동 저장**. 공개하기 / 비공개로 / ⋯(주소 바꾸기·삭제) |
-| `/import` | .md 여러 개 → 글 (frontmatter title·date·tags, 없으면 첫 # 제목·파일 이름). 임시글로 또는 바로 공개 |
-| `/my` · `/privacy` | 블로그 이름·소개 수정, 데이터 내보내기(JSON), 회원 탈퇴 / 개인정보 처리방침 |
+| `/blog` | 로그인 전: 소개 + Google 로그인. 로그인 후 블로그가 없으면 **아이디·이름 정하기**, 있으면 `/@<아이디>` 로 |
+| `/@<아이디>` | 글 목록 (공개일 최신순). 왼쪽 사이드: 블로그 이름·소개 → 전체/임시글(주인만) → 태그 → 달. 주인에겐 **＋ 새 글**, **가져오기** |
+| `/@<아이디>/<글주소>` | 글 보기. 본문 720px, 넓은 화면(1181px~)엔 오른쪽 목차. 주인에겐 **수정** |
+| `/blog/write` → `/blog/edit/<id>` | 에디터. 제목 · 태그(쉼표) · 툴바 · 본문 textarea \| 미리보기 (폰은 쓰기/미리보기 탭). **0.5초 멈추면 자동 저장**. 공개하기 / 비공개로 / ⋯(주소 바꾸기·삭제) |
+| `/blog/import` | .md 여러 개 → 글 (frontmatter title·date·tags, 없으면 첫 # 제목·파일 이름). 임시글로 또는 바로 공개 |
+| `/blog/my` · `/blog/privacy` | 블로그 이름·소개 수정, 데이터 내보내기(JSON), 회원 탈퇴 / 개인정보 처리방침 |
 
-- 로그인 안 한 손님도 `/<아이디>` 와 공개 글은 볼 수 있음 (헤더에 작은 로그인 버튼)
+- 주소 체계와 경로 헬퍼는 `src/lib/paths.ts` (`app()`, `blogHome()`, `postUrl()`). 글쓰기 화면(`/blog/write·edit·import·my`)은 `<meta name="robots" content="noindex">`
+- 로그인 안 한 손님도 `/@<아이디>` 와 공개 글은 볼 수 있음 (헤더에 작은 로그인 버튼)
 - 글 주소(slug)는 **공개할 때 제목에서** 만듦 (한글 그대로, 공백은 `-`). 겹치면 `-2`. ⋯ > 주소 바꾸기로 직접 지정 가능
 - 삭제는 **소프트 삭제** + "실행 취소" 토스트. 30일 뒤 영구 삭제. 임시글은 제목·본문 없이 나가면 조용히 지움
 - 이미지: 툴바 버튼·붙여넣기·끌어다 놓기 → Supabase Storage `blog-images/<내 id>/…` (5MB, 이미지만). 로컬 모드는 data: 주소로 본문에 들어감
-- 아이디 규칙: 소문자·숫자·하이픈 3~20자, 예약어(write·edit·my·privacy·import·todo·books·… `src/lib/types.ts`) 금지. 한 번 정하면 못 바꿈
+- 아이디 규칙: 소문자·숫자·하이픈 3~20자, 예약어(admin·dodo·todo·books·… 브랜드·사칭 방지용, `src/lib/types.ts`) 금지. 주소에 `@` 가 붙어 화면 경로와는 안 부딪힘. 한 번 정하면 못 바꿈
 
 ### 에디터 (dev-wiki 에서 가져온 것)
 
@@ -44,7 +45,7 @@ npm install
 npm run dev
 ```
 
-http://localhost:5180 (투두 5175 · 북로그 5177 · 홈 5178)
+http://localhost:5180/blog (투두 5175 · 북로그 5177 · 홈 5178). `/` 는 `/blog` 로 보내고, `/@아이디` 도 그대로 열림 (`vite.config.ts` 의 개발용 플러그인)
 
 ## Supabase 연결
 
@@ -56,9 +57,11 @@ http://localhost:5180 (투두 5175 · 북로그 5177 · 홈 5178)
    - `touch_updated_at`, `enforce_row_limit` 는 투두·북로그와 같은 내용. `delete_blog_data()` 추가 (아래 "두두 계정"). `delete_my_account` 는 **여기서 정의하지 않음** — 투두 008 이 원본
    - 투두 `supabase/migrations/008_account.sql` 이 먼저 실행돼 있어야 "두두 계정 탈퇴"가 블로그 기록까지 지운다 (008 은 `delete_blog_data` 가 있으면 부름)
 2. 30일 지난 삭제분 파기: `supabase/migrations/002_purge_deleted.sql` 실행 (pg_cron 은 투두 005 에서 이미 켜져 있음)
+   - 001 을 주소 변경 전에 실행했다면 `003_handle_reserved.sql` 도 실행 (예약어 목록 축소)
 3. **Authentication → URL Configuration → Redirect URLs** 에 추가:
-   - `https://blog.dododiary.com`
-   - `http://localhost:5180` (개발용)
+   - `https://dododiary.com/blog`
+   - `http://localhost:5180/blog` (개발용)
+   - 예전 `https://blog.dododiary.com` 이 있으면 지움
 4. `.env.example` 을 `.env` 로 복사하고 채움 — `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` 는 **투두 `.env` 값 그대로**
 5. `npm run dev` → "Google 계정으로 로그인" → 아이디 정하기
 
@@ -80,27 +83,34 @@ http://localhost:5180 (투두 5175 · 북로그 5177 · 홈 5178)
 투두의 GitHub Actions 백업(`dodo-todo/.github/workflows/backup.yml`)이 `public` 스키마 전체를 뜨므로 `blog_profiles`, `blog_posts` 도 같이 백업된다.
 덤프 검사 목록에 `blog_profiles blog_posts` 를 추가해 두면 빠졌을 때 알림이 온다. **Storage 의 이미지 파일은 백업에 안 들어간다** (처리방침 3항에 명시).
 
-## 배포 (Cloudflare Workers, 정적 사이트)
+## 배포 (Cloudflare Workers, 같은 호스트에 홈 + 블로그)
 
-투두와 같은 방식. 설정은 `wrangler.jsonc` (이름 `dodo-blog`). SEO 프리렌더 Worker 는 2차 (아래).
+`dododiary.com` 은 두두 홈(dodo-home) Worker 가 **커스텀 도메인**으로 갖고 있다. 블로그 Worker 는 같은 호스트에 **라우트** 두 개로 붙는다:
+`dododiary.com/@*` (블로그 홈·글) 와 `dododiary.com/blog*` (앱 화면 + `/blog/assets/…` 에셋). `wrangler.jsonc` 에 적어 뒀다.
 
-1. GitHub 에 **private 저장소 `kteee/dodo-blog`** 를 만들고 푸시:
-   ```bash
-   git remote add origin git@github.com:kteee/dodo-blog.git
-   git push -u origin main
-   ```
+> 우선순위 (Cloudflare 문서 [Routes](https://developers.cloudflare.com/workers/configuration/routing/routes/)): "Routes can `fetch()` Custom Domains and **take precedence if configured on the same hostname**."
+> 즉 라우트에 걸리는 `/@…`·`/blog…` 는 블로그 Worker 가 받고, 나머지는 홈 Worker 가 받는다. 홈 쪽은 손댈 것 없음.
+> 라우트 패턴은 끝에 `*` 만 허용(중간 와일드카드 불가)이고, `/@*` 는 `/@` 로 시작하는 모든 경로에 맞는다.
+
+1. GitHub 저장소 `kteee/dodo-blog` 에 푸시 (돼 있음)
 2. Cloudflare 대시보드 → **Workers & Pages → Create → Workers → Import a repository** → `dodo-blog` 선택
    - Build command `npm run build`, Deploy command `npx wrangler deploy`
+   - `wrangler.jsonc` 의 `routes` 가 배포 때 같이 등록된다 (`zone_name: dododiary.com`). 대시보드에서 확인: Worker → Settings → **Domains & Routes** 에 `dododiary.com/@*`, `dododiary.com/blog*` 두 줄
+   - 등록이 안 됐으면 거기서 **Add → Route** 로 같은 패턴 두 개를 Zone `dododiary.com` 에 직접 추가
+   - `workers_dev: false` 라 `*.workers.dev` 주소는 안 생김
 3. **빌드용 변수** (Settings → Build → Variables and secrets):
    `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SENTRY_DSN`(선택), `NODE_VERSION=22`
    - 값이 빠지면 배포판은 "서비스 설정 오류" 화면을 띄움 (조용히 로컬 모드로 가지 않게)
-4. 도메인: Worker → Settings → **Domains & Routes → Add → Custom domain** → `blog.dododiary.com`
-5. Supabase Redirect URLs 에 `https://blog.dododiary.com` 추가 (위 "Supabase 연결" 3번)
-6. 투두 `AppsMenu` · 홈 시리즈 카드 · 북로그 푸터에 블로그 링크 추가
+4. 확인: `https://dododiary.com/blog` 가 블로그 로그인 화면, `https://dododiary.com/@아이디` 가 블로그 홈, `https://dododiary.com/` 은 그대로 두두 홈
+   - `/@…` 요청도 블로그 Worker 의 정적 에셋에 없는 경로라 `not_found_handling: single-page-application` 으로 블로그 index.html 이 나간다
+5. Supabase Redirect URLs: `https://dododiary.com/blog` 추가, `https://blog.dododiary.com` 제거 (위 "Supabase 연결" 3번)
+6. **홈(dodo-home) 쪽**: `robots.txt` 는 루트(홈 Worker) 것만 읽히므로 홈 robots 에 `Disallow: /blog/write`, `/blog/edit/`, `/blog/my`, `/blog/import` 추가. 홈 푸터·/account 의 블로그 링크는 `https://dododiary.com/blog`. 투두 `AppsMenu` · 북로그 푸터의 블로그 링크도 같은 주소
+
+대안(라우트가 우선 적용되지 않는 경우): 홈 Worker 가 `/@*`·`/blog*` 를 [Service binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/) 으로 블로그 Worker 에 넘기는 방식. 지금은 문서상 라우트가 우선이라 쓰지 않는다.
 
 ### 2차: SEO 프리렌더
 
-지금은 SPA 라 크롤러가 빈 HTML 을 본다. 북로그의 `run_worker_first` Worker 패턴으로 `/<아이디>/<글>` 요청에 Worker 가 Supabase(anon 키)에서 글을 읽어 `<title>`·description·OG·본문 HTML 을 index.html 에 끼워 응답하면 된다. sitemap.xml 도 같은 Worker 에서. `robots.txt` 는 이미 `/write`·`/edit`·`/my`·`/import` 를 막아 뒀다.
+지금은 SPA 라 크롤러가 빈 HTML 을 본다. 북로그의 `run_worker_first` Worker 패턴으로 `/@<아이디>/<글>` 요청에 Worker 가 Supabase(anon 키)에서 글을 읽어 `<title>`·description·OG·본문 HTML 을 index.html 에 끼워 응답하면 된다. sitemap.xml 도 같은 Worker 에서 (`/blog/sitemap.xml` 로 내고 홈 robots 에 `Sitemap:` 줄 추가).
 
 ## 에러 알림 (Sentry)
 
@@ -124,12 +134,14 @@ src/
   lib/editorOps.ts        편집 동작 순수 함수 (dev-wiki editor.js 이식: 서식·똑똑한 Enter/Tab·표 모델)
   lib/markdown.ts         marked + DOMPurify + 형광펜 + 목차 · frontmatter 분리
   lib/types.ts            타입·상한·아이디 규칙·slug·정렬·요약
+  lib/paths.ts            주소 체계 (/blog, /@아이디, /@아이디/글)
   hooks/useRoute.ts       pushState 기반 경로
   styles.css              앞부분은 투두 styles.css 공통 부분 그대로, "블로그 전용" 부터가 이 서비스 것
 supabase/schema.sql       전체 스키마 (= migrations/001_blog.sql)
 supabase/migrations/      001 테이블·RLS·상한·버킷, 002 30일 파기(pg_cron)
-public/_headers           CSP(img-src https: — 글에 적은 외부 이미지 허용)·HSTS·캐시 규칙
-public/robots.txt         쓰기 화면 크롤 차단
+public/_headers           CSP(img-src https: — 글에 적은 외부 이미지 허용)·HSTS·캐시 규칙 (/blog/assets/*)
+vite.config.ts            base /blog/ + 개발 서버용 /@… 폴백·/ → /blog 리다이렉트
+wrangler.jsonc            라우트 dododiary.com/@* · /blog*
 ```
 
 ## 안정성 (투두와 같은 규칙)

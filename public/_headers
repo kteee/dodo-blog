@@ -6,7 +6,7 @@
 #  - connect: Supabase API(DB·Storage 업로드), Sentry 오류 전송
 #  - cloudflareinsights: Cloudflare Web Analytics(쿠키 없는 방문자 수 집계, 처리방침 9항)
 #  - X-Frame-Options 는 그대로 DENY: 남의 사이트가 블로그를 iframe 으로 끼워 넣지 못하게
-# Cache-Control no-cache: HTML(SPA 폴백으로 오는 모든 경로)은 항상 서버에 확인
+# Cache-Control no-cache: HTML(SPA 폴백으로 오는 /@…, /blog/… 모든 경로)은 항상 서버에 확인
 #  → 배포 직후 구버전 index 가 새 asset 을 못 찾는 사고 방지. /assets/* 는 아래서 덮어씀
 /*
   X-Frame-Options: DENY
@@ -17,7 +17,7 @@
   Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io https://cloudflareinsights.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
   Cache-Control: no-cache
 
-# 빌드 결과물(파일 이름에 해시가 붙음)은 오래 캐시
-/assets/*
+# 빌드 결과물(파일 이름에 해시가 붙음)은 오래 캐시. base 가 /blog/ 라 에셋은 /blog/assets/…
+/blog/assets/*
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable

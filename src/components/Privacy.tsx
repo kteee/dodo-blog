@@ -5,6 +5,8 @@
  */
 
 // ── 운영자가 채울 값 ──────────────────────────────────────────
+import { app } from "../lib/paths";
+
 const OPERATOR = "김태은"; // 개인 운영이면 본인 성명
 const CONTACT = "kte02320@gmail.com";
 const EFFECTIVE = "2026년 10월 21일";
@@ -13,7 +15,7 @@ const DB_REGION = "대한민국 서울(AWS ap-northeast-2)"; // Supabase 프로�
 export function Privacy() {
   return (
     <div className="privacy">
-      <a className="privacy-back" href="/">
+      <a className="privacy-back" href={app()}>
         ← 블로그로 돌아가기
       </a>
       <h1>개인정보 처리방침</h1>

@@ -8,7 +8,7 @@ export function Intro({ onSignIn }: { onSignIn: () => void }) {
   return (
     <main className="signed-out intro">
       <h1 className="intro-h">마크다운으로 쓰는 나만의 블로그</h1>
-      <p>다이어리에 적듯이, 간편하게. 내 주소는 blog.dododiary.com/아이디</p>
+      <p>다이어리에 적듯이, 간편하게. 내 주소는 dododiary.com/@아이디</p>
       <GoogleButton onClick={onSignIn} />
     </main>
   );
@@ -47,7 +47,7 @@ export function CreateBlog({ taken, onCreate }: CreateProps) {
       try {
         const used = await taken(h);
         if (my !== seq.current) return;
-        setHint(used ? { kind: "err", text: "이미 쓰고 있는 아이디예요" } : { kind: "ok", text: `blog.dododiary.com/${h} — 쓸 수 있어요` });
+        setHint(used ? { kind: "err", text: "이미 쓰고 있는 아이디예요" } : { kind: "ok", text: `dododiary.com/@${h} — 쓸 수 있어요` });
       } catch (e) {
         if (my !== seq.current) return;
         report(e, "handleTaken");
@@ -83,7 +83,7 @@ export function CreateBlog({ taken, onCreate }: CreateProps) {
         }}
       >
         <label className="mk-row">
-          <span className="mk-pre">blog.dododiary.com/</span>
+          <span className="mk-pre">dododiary.com/@</span>
           <input
             className="mk-in"
             type="text"

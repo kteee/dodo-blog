@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import { APP } from "../lib/paths";
 
 export interface Account {
   id: string;
@@ -53,7 +54,8 @@ export function useAuth(): AuthState {
 export function signIn() {
   return supabase?.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: window.location.origin },
+    // 로그인 뒤엔 앱 화면(/blog)으로. 두두 홈이 / 를 갖고 있어서 origin 만 주면 홈으로 떨어짐
+    options: { redirectTo: window.location.origin + APP },
   });
 }
 

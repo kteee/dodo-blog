@@ -1,9 +1,18 @@
 // Cloudflare Workers 정적 사이트 배포 설정 (두두 투두와 같은 방식)
 // - npm run build 결과(dist/)를 그대로 올림. 서버 코드는 없음 (SEO 프리렌더 Worker 는 2차)
-// - SPA라서 없는 경로(/<아이디>/<글>, /edit/…, /my)로 들어와도 index.html을 돌려줌
+// - 주소: dododiary.com 은 두두 홈(dodo-home) Worker 의 커스텀 도메인. 이 Worker 는 그 호스트의
+//   `/@*`(블로그 홈·글)와 `/blog*`(앱 화면·에셋) 라우트로만 붙는다. Cloudflare 문서: "Routes … take precedence
+//   if configured on the same hostname" — 라우트가 커스텀 도메인 Worker 보다 먼저 받는다
+// - SPA 라서 /@아이디, /@아이디/글, /blog/edit/… 어디로 들어와도 index.html 을 돌려줌 (not_found_handling)
+// - 에셋 경로는 /blog/assets/… (vite base) 라 홈의 /assets/… 와 안 겹침
 {
   "name": "dodo-blog",
   "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "dododiary.com/@*", "zone_name": "dododiary.com" },
+    { "pattern": "dododiary.com/blog*", "zone_name": "dododiary.com" }
+  ],
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"

@@ -26,12 +26,12 @@ begin
   return new;
 end $$;
 
--- ── 아이디 규칙: 소문자·숫자·하이픈 3~20자, 하이픈으로 시작·끝 안 됨, 예약어 아님 (src/lib/types.ts 의 handleProblem 과 같은 규칙) ──
+-- ── 아이디 규칙: 소문자·숫자·하이픈 3~20자, 하이픈으로 시작·끝 안 됨, 예약어(브랜드·사칭 방지) 아님 (src/lib/types.ts 와 같은 규칙).
+--    주소가 /@아이디 라 화면 경로(write·edit·my…)와는 안 부딪힌다 ──
 create or replace function public.blog_handle_ok(h text) returns boolean
 language sql immutable set search_path = '' as $$
   select h ~ '^[a-z0-9]([a-z0-9-]{1,18}[a-z0-9])?$'
-     and h not in ('write','edit','my','privacy','import','new','login','logout','auth','api','assets','static','fonts',
-                   'admin','root','blog','www','todo','books','home','dodo','dododiary','about','help','settings','search','tag','tags','rss','feed','sitemap');
+     and h not in ('admin','root','official','support','help','dodo','dododiary','blog','todo','books','home','www','api','login','auth');
 $$;
 
 -- ── 블로그 주인 정보 (계정당 한 행) ──────────────────────

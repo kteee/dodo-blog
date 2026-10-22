@@ -5,6 +5,7 @@ import { LIMITS } from "../lib/types";
 import { report } from "../lib/monitoring";
 import { onLinkClick } from "../hooks/useRoute";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { app, blogHome, showUrl } from "../lib/paths";
 
 interface Props {
   account: Account;
@@ -62,7 +63,7 @@ export function MyPage({ account, isLocal, profile, onProfile, onExport, onDelet
 
   return (
     <main className="mypage">
-      <a className="mypage-back" href={profile ? "/" + profile.handle : "/"} onClick={onLinkClick}>
+      <a className="mypage-back" href={profile ? blogHome(profile.handle) : app()} onClick={onLinkClick}>
         ← 블로그로 돌아가기
       </a>
       <h1>마이페이지</h1>
@@ -81,7 +82,7 @@ export function MyPage({ account, isLocal, profile, onProfile, onExport, onDelet
           <p className="sect-label">내 블로그</p>
           <div className="mk-row">
             <span className="mk-pre">주소</span>
-            <span className="mk-val">blog.dododiary.com/{profile.handle}</span>
+            <span className="mk-val">{showUrl(profile.handle)}</span>
           </div>
           <label className="mk-row">
             <span className="mk-pre">이름</span>
@@ -107,7 +108,7 @@ export function MyPage({ account, isLocal, profile, onProfile, onExport, onDelet
           </li>
         )}
         <li>
-          <a href="/privacy">
+          <a href={app("/privacy")}>
             <span>
               <b>개인정보 처리방침</b>
             </span>

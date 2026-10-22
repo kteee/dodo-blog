@@ -1,5 +1,0 @@
-User-agent: *
-Disallow: /write
-Disallow: /edit/
-Disallow: /my
-Disallow: /import

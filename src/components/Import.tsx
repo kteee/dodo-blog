@@ -3,6 +3,7 @@ import type { Profile } from "../lib/types";
 import { LIMITS, utf8Bytes } from "../lib/types";
 import { splitFrontmatter } from "../lib/markdown";
 import { onLinkClick } from "../hooks/useRoute";
+import { blogHome } from "../lib/paths";
 
 interface Item {
   name: string;
@@ -58,7 +59,7 @@ export function ImportPage({ profile, onImport, onDone }: Props) {
   const ok = items.filter((i) => !i.tooBig);
   return (
     <main className="mypage import">
-      <a className="mypage-back" href={"/" + profile.handle} onClick={onLinkClick}>
+      <a className="mypage-back" href={blogHome(profile.handle)} onClick={onLinkClick}>
         ← 블로그로 돌아가기
       </a>
       <h1>마크다운 가져오기</h1>

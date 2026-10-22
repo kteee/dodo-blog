@@ -1,5 +1,6 @@
 import type { Account } from "../data/auth";
 import { onLinkClick } from "../hooks/useRoute";
+import { app } from "../lib/paths";
 
 interface Props {
   account: Account | null;
@@ -38,7 +39,7 @@ export function GoogleButton({ onClick, size = "md" }: { onClick: () => void; si
 export function TopNav({ account, isLocal, myBlog, menuOpen, setMenuOpen, onSignIn, onSignOut }: Props) {
   return (
     <header className="topnav">
-      <a className="logo" href="/" onClick={onLinkClick}>
+      <a className="logo" href={app()} onClick={onLinkClick}>
         <span className="mark" aria-hidden="true">
           {/* 탭 아이콘(favicon.svg)과 같은 좌표·비율: 네모를 꽉 채운 24 기준 (연필 + 밑줄) */}
           <svg viewBox="0 0 24 24">
@@ -86,7 +87,7 @@ export function TopNav({ account, isLocal, myBlog, menuOpen, setMenuOpen, onSign
                   )}
                   <a
                     className="mi"
-                    href="/my"
+                    href={app("/my")}
                     onClick={(e) => {
                       setMenuOpen(false);
                       onLinkClick(e);

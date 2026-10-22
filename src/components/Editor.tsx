@@ -10,6 +10,7 @@ import { usePhone } from "../hooks/usePhone";
 import { onLinkClick } from "../hooks/useRoute";
 import { FontMenu } from "./Blog";
 import { report } from "../lib/monitoring";
+import { blogHome, postUrl, showUrl } from "../lib/paths";
 
 interface Props {
   profile: Profile;
@@ -214,8 +215,8 @@ export function Editor({ profile, post, actions, unfold, onBack }: Props) {
 
   const { html } = useMarkdown(body);
   const isPublic = post.status === "public";
-  const home = "/" + profile.handle;
-  const viewHref = `${home}/${encodeURIComponent(post.slug)}`;
+  const home = blogHome(profile.handle);
+  const viewHref = postUrl(profile.handle, post.slug);
 
   useEffect(() => {
     if (!menu) return;
@@ -411,7 +412,7 @@ export function Editor({ profile, post, actions, unfold, onBack }: Props) {
           }}
         >
           <span className="mk-pre">
-            blog.dododiary.com/{profile.handle}/
+            {showUrl(profile.handle)}/
           </span>
           <input className="mk-in" type="text" value={slugEdit} maxLength={LIMITS.slug} autoFocus placeholder="비우면 제목으로" onChange={(e) => setSlugEdit(e.target.value)} />
           <button type="submit" className="btn sm">

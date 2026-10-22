@@ -5,6 +5,7 @@ import { go, onLinkClick } from "../hooks/useRoute";
 import { Markdown, Toc, useMarkdown } from "./Markdown";
 import { OptionsMenu } from "./OptionsMenu";
 import { FONTS, readFont, saveFont, type Font } from "../lib/font";
+import { app, blogHome, postUrl } from "../lib/paths";
 
 export interface Filter {
   tag: string | null;
@@ -40,7 +41,7 @@ export function BlogSide({ profile, posts, filter, onFilter, isOwner }: SideProp
     return [...m.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
   }, [pub]);
   const drafts = isOwner ? posts.filter((p) => p.status === "draft").length : 0;
-  const home = "/" + profile.handle;
+  const home = blogHome(profile.handle);
   return (
     <>
       <div className="blog-who">
@@ -150,7 +151,6 @@ interface ListProps {
   onImport?: () => void;
 }
 export function PostList({ profile, posts, filter, isOwner, unfold, onNew, onImport }: ListProps) {
-  const home = "/" + profile.handle;
   const list = useMemo(() => {
     let l = posts;
     if (filter.tag === "__draft") l = l.filter((p) => p.status === "draft");
@@ -203,7 +203,7 @@ export function PostList({ profile, posts, filter, isOwner, unfold, onNew, onImp
         ) : (
           <ul className="posts">
             {list.map((p) => {
-              const href = p.status === "public" ? `${home}/${encodeURIComponent(p.slug)}` : `/edit/${p.id}`;
+              const href = p.status === "public" ? postUrl(profile.handle, p.slug) : app(`/edit/${p.id}`);
               return (
                 <li key={p.id} className="post-row">
                   <a className="post-link" href={href} onClick={onLinkClick}>
@@ -238,7 +238,7 @@ interface ViewProps {
 }
 export function PostView({ profile, post, isOwner, unfold, onEdit }: ViewProps) {
   const { html, toc } = useMarkdown(post.body);
-  const home = "/" + profile.handle;
+  const home = blogHome(profile.handle);
   // 글이 바뀌면 맨 위로. 주소에 #목차 가 있으면 거기로
   useEffect(() => {
     const id = decodeURIComponent(location.hash.slice(1));

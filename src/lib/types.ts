@@ -39,11 +39,8 @@ export const LIMITS = {
   imageBytes: 5 * 1024 * 1024,
 } as const;
 
-/** 주소로 못 쓰는 아이디 — 화면 경로·시리즈 서브도메인과 겹치는 것 (DB 의 blog_handle_ok 와 같은 목록) */
-export const RESERVED_HANDLES = [
-  "write", "edit", "my", "privacy", "import", "new", "login", "logout", "auth", "api", "assets", "static", "fonts",
-  "admin", "root", "blog", "www", "todo", "books", "home", "dodo", "dododiary", "about", "help", "settings", "search", "tag", "tags", "rss", "feed", "sitemap",
-];
+/** 주소로 못 쓰는 아이디 — 주소가 /@아이디 라 화면 경로와는 안 부딪힘. 브랜드·운영자 사칭 방지용만 (DB 의 blog_handle_ok 와 같은 목록) */
+export const RESERVED_HANDLES = ["admin", "root", "official", "support", "help", "dodo", "dododiary", "blog", "todo", "books", "home", "www", "api", "login", "auth"];
 
 const HANDLE_RE = /^[a-z0-9](?:[a-z0-9-]{1,18}[a-z0-9])?$/;
 
