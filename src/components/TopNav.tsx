@@ -149,6 +149,18 @@ export function TopNav({ brand, search, account, isLocal, myBlog, menuOpen, setM
                       내 블로그
                     </a>
                   )}
+                  {myBlog && (
+                    <a
+                      className="mi"
+                      href={app("/categories")}
+                      onClick={(e) => {
+                        setMenuOpen(false);
+                        onLinkClick(e);
+                      }}
+                    >
+                      카테고리 관리
+                    </a>
+                  )}
                   <a
                     className="mi"
                     href={app("/my")}

@@ -78,9 +78,8 @@ interface ListProps {
   isOwner: boolean;
   onNew?: () => void;
   onImport?: () => void;
-  onCategories?: () => void;
 }
-export function PostList({ profile, posts, categories, filter, isOwner, onNew, onImport, onCategories }: ListProps) {
+export function PostList({ profile, posts, categories, filter, isOwner, onNew, onImport }: ListProps) {
   const list = useMemo(() => {
     let l = posts;
     if (filter.tag === "__draft") l = l.filter((p) => p.status === "draft");
@@ -118,11 +117,6 @@ export function PostList({ profile, posts, categories, filter, isOwner, onNew, o
         {isOwner && onImport && (
           <button className="btn quiet sm" onClick={onImport}>
             가져오기
-          </button>
-        )}
-        {isOwner && onCategories && (
-          <button className="btn quiet sm" onClick={onCategories}>
-            카테고리
           </button>
         )}
         {isOwner && onNew && (

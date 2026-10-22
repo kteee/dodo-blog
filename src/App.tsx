@@ -237,7 +237,6 @@ export default function App() {
         isOwner={isOwner}
         onNew={isOwner ? () => go(app("/write")) : undefined}
         onImport={isOwner ? () => go(app("/import")) : undefined}
-        onCategories={isOwner ? () => go(app("/categories")) : undefined}
       />
     );
   }
