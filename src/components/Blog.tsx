@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useEffect, useMemo } from "react";
 import type { Category, Post, Profile } from "../lib/types";
 import { excerpt, fmtDate, monthKey, pathOf, postDate, sortPosts, subtreeIds } from "../lib/types";
 import { CategoryTree } from "./CategoryTree";
@@ -118,11 +118,11 @@ interface ListProps {
   categories: Category[];
   filter: Filter;
   isOwner: boolean;
-  unfold: ReactNode;
   onNew?: () => void;
   onImport?: () => void;
+  onCategories?: () => void;
 }
-export function PostList({ profile, posts, categories, filter, isOwner, unfold, onNew, onImport }: ListProps) {
+export function PostList({ profile, posts, categories, filter, isOwner, onNew, onImport, onCategories }: ListProps) {
   const list = useMemo(() => {
     let l = posts;
     if (filter.tag === "__draft") l = l.filter((p) => p.status === "draft");
@@ -147,7 +147,6 @@ export function PostList({ profile, posts, categories, filter, isOwner, unfold, 
   return (
     <>
       <div className="toolbar">
-        {unfold}
         <h1 className="h1">
           {crumbs.map((c) => (
             <span key={c.id} className="crumb-pre">
@@ -161,6 +160,11 @@ export function PostList({ profile, posts, categories, filter, isOwner, unfold, 
         {isOwner && onImport && (
           <button className="btn quiet sm" onClick={onImport}>
             가져오기
+          </button>
+        )}
+        {isOwner && onCategories && (
+          <button className="btn quiet sm" onClick={onCategories}>
+            카테고리
           </button>
         )}
         {isOwner && onNew && (
@@ -221,10 +225,9 @@ interface ViewProps {
   /** 글 머리의 카테고리 경로를 누르면 그 카테고리 목록으로 */
   onCategory?: (id: string) => void;
   isOwner: boolean;
-  unfold: ReactNode;
   onEdit?: () => void;
 }
-export function PostView({ profile, post, categories, onCategory, isOwner, unfold, onEdit }: ViewProps) {
+export function PostView({ profile, post, categories, onCategory, isOwner, onEdit }: ViewProps) {
   const { html, toc } = useMarkdown(post.body);
   const home = blogHome(profile.handle);
   const crumbs = pathOf(categories, post.categoryId);
@@ -246,7 +249,6 @@ export function PostView({ profile, post, categories, onCategory, isOwner, unfol
   return (
     <>
       <div className="toolbar">
-        {unfold}
         <a className="crumb" href={home} onClick={onLinkClick}>
           ← {profile.title}
         </a>

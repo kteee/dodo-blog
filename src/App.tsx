@@ -18,24 +18,6 @@ import { Search } from "./components/Search";
 import { APP, app, blogHome, postUrl } from "./lib/paths";
 import { report } from "./lib/monitoring";
 
-/* 보기 옵션은 이 브라우저에만 기억 (저장이 막혀도 기본값으로 동작) */
-const SIDE_PREF = "dodo-blog:sideFolded";
-function readPref(k: string, fallback: boolean) {
-  try {
-    const v = localStorage.getItem(k);
-    return v === null ? fallback : v === "1";
-  } catch {
-    return fallback;
-  }
-}
-function writePref(k: string, v: boolean) {
-  try {
-    localStorage.setItem(k, v ? "1" : "0");
-  } catch {
-    /* 저장 못 해도 이번 화면에서는 적용됨 */
-  }
-}
-
 /** 남의 블로그 읽기 (로그인 없이). 같은 아이디는 한 번만 받아 둠 */
 function usePublicBlog(repo: Repo | null, handle: string | null, skip: boolean) {
   const [state, setState] = useState<{ handle: string; blog: PublicBlog | null; status: "loading" | "ready" | "error" } | null>(null);
@@ -69,13 +51,6 @@ export default function App() {
   const path = useRoute();
   const [menuOpen, setMenuOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>(NO_FILTER);
-  const [sideFolded, setSideFoldedState] = useState(() => readPref(SIDE_PREF, false));
-  const toggleSide = () => {
-    setSideFoldedState((v) => {
-      writePref(SIDE_PREF, !v);
-      return !v;
-    });
-  };
 
   // 계정 메뉴: 바깥을 누르거나 Esc 로 닫힘
   useEffect(() => {
@@ -209,7 +184,6 @@ export default function App() {
           post={post}
           categories={categories}
           actions={actions}
-          unfold={null}
           onBack={() => {
             actions.discardEmpty(post.id);
             go(blogHome(profile.handle));
@@ -231,11 +205,6 @@ export default function App() {
   }
 
   /* ── 블로그 화면 (/<handle>, /<handle>/<slug>) — 누구나 ── */
-  const unfold = sideFolded ? (
-    <button className="side-tg" aria-label="사이드바 펼치기" title="펼치기" onClick={toggleSide}>
-      <SideIcon />
-    </button>
-  ) : null;
 
   let main: ReactNode;
   if (!blog) {
@@ -255,7 +224,6 @@ export default function App() {
           go(blogHome(blog.profile.handle));
         }}
         isOwner={isOwner}
-        unfold={unfold}
         onEdit={isOwner ? () => go(app("/edit/" + post.id)) : undefined}
       />
     );
@@ -267,9 +235,9 @@ export default function App() {
         categories={blog.categories}
         filter={filter}
         isOwner={isOwner}
-        unfold={unfold}
         onNew={isOwner ? () => go(app("/write")) : undefined}
         onImport={isOwner ? () => go(app("/import")) : undefined}
+        onCategories={isOwner ? () => go(app("/categories")) : undefined}
       />
     );
   }
@@ -277,14 +245,9 @@ export default function App() {
   return (
     <div className="page">
       {nav}
-      <div className={"app" + (sideFolded ? " side-folded" : "")}>
-        {!blog || sideFolded ? null : (
-          <aside className="side" aria-label="블로그 정보">
-            <div className="side-top">
-              <button className="side-tg" aria-label="사이드바 접기" title="접기" onClick={toggleSide}>
-                <SideIcon />
-              </button>
-            </div>
+      <div className="app">
+        {!blog ? null : (
+          <aside className="side" aria-label="카테고리">
             <BlogSide
               handle={blog.profile.handle}
               posts={blog.posts}
@@ -304,15 +267,6 @@ export default function App() {
       {store.net.offline && <NetBar n={store.net.waiting} />}
       <Toasts toasts={store.toasts} dismiss={store.dismiss} />
     </div>
-  );
-}
-
-function SideIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <rect x="1.5" y="2.5" width="13" height="11" rx="2" />
-      <path d="M6 2.5v11" />
-    </svg>
   );
 }
 

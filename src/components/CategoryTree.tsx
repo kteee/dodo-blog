@@ -18,7 +18,7 @@ interface Props {
 /**
  * 왼쪽 사이드의 폴더 트리 — dev-wiki 사이드바 그대로:
  * 1단계 카테고리는 고정 헤더(접지 않음), 그 아래는 <details> 로 접히고(보는 글이 안에 있으면 펼쳐짐), 카테고리 밑에 글 목록.
- * 관리(추가·이름·순서·상위·삭제)는 /blog/categories 페이지에서 — 주인에겐 맨 아래 "카테고리 관리" 링크.
+ * 관리(추가·이름·순서·상위·삭제)는 /blog/categories 페이지에서 — 글 목록 위 "카테고리" 버튼.
  */
 export function CategoryTree({ handle, categories, posts, selected: selectedIn, onSelect, currentPostId, isOwner }: Props) {
   // "__x" = 태그·달 필터 중이라 트리엔 선택 표시 없음. "전체 보기"는 헤더의 블로그 제목이 맡음 (사이드바에 전체 줄 없음)
@@ -93,13 +93,6 @@ export function CategoryTree({ handle, categories, posts, selected: selectedIn, 
             <button className={"ct-name" + (selected === "__none" ? " on" : "")} onClick={() => onSelect(selected === "__none" ? null : "__none")}>
               <span className="nm">미분류</span>
             </button>
-          </li>
-        )}
-        {isOwner && (
-          <li>
-            <a className="addcat" href={app("/categories")} onClick={onLinkClick}>
-              카테고리 관리
-            </a>
           </li>
         )}
       </ul>

@@ -15,7 +15,6 @@ interface Props {
   post: Post;
   categories: Category[];
   actions: Actions;
-  unfold: ReactNode;
   /** 블로그 목록으로 */
   onBack: () => void;
 }
@@ -54,7 +53,7 @@ function flatCats(cats: Category[], parentId: string | null = null, depth = 0): 
   return childrenOf(cats, parentId).flatMap((c) => [{ c, depth }, ...flatCats(cats, c.id, depth + 1)]);
 }
 
-export function Editor({ profile, post, categories, actions, unfold, onBack }: Props) {
+export function Editor({ profile, post, categories, actions, onBack }: Props) {
   const [title, setTitle] = useState(post.title);
   const [tagText, setTagText] = useState(post.tags.join(", "));
   const [body, setBody] = useState(post.body);
@@ -349,7 +348,6 @@ export function Editor({ profile, post, categories, actions, unfold, onBack }: P
   return (
     <div className="editor">
       <div className="toolbar ed-top">
-        {unfold}
         <a className="crumb" href={home} onClick={(e) => {
           e.preventDefault();
           flush();
