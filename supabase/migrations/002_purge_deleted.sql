@@ -9,7 +9,8 @@ select cron.schedule(
   'dodo-blog-purge-deleted',
   '0 19 * * *',
   $$
-    delete from public.blog_posts where deleted_at is not null and deleted_at < now() - interval '30 days';
+    delete from public.blog_posts      where deleted_at is not null and deleted_at < now() - interval '30 days';
+    delete from public.blog_categories where deleted_at is not null and deleted_at < now() - interval '30 days';
   $$
 );
 

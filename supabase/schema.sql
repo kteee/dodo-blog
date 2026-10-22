@@ -55,6 +55,7 @@ create table if not exists public.blog_posts (
   title         text not null default '' check (char_length(title) <= 120),
   body_md       text not null default '' check (octet_length(body_md) <= 102400),   -- 100KB (한글 약 3만 자)
   tags          text[] not null default '{}' check (cardinality(tags) <= 10),
+  category_id   uuid,                                                                 -- 속한 카테고리 (null = 미분류). 외래키는 아래 (카테고리 테이블 뒤)
   status        text not null default 'draft' check (status in ('draft', 'public')),
   published_at  timestamptz,                                                          -- 처음 공개한 시각
   created_at    timestamptz not null default now(),
@@ -70,6 +71,28 @@ create index if not exists blog_posts_user_idx     on public.blog_posts (user_id
 create index if not exists blog_posts_public_idx   on public.blog_posts (user_id, published_at desc) where deleted_at is null and status = 'public';
 create index if not exists blog_posts_deleted_idx  on public.blog_posts (deleted_at) where deleted_at is not null;
 
+-- ── 카테고리 폴더 트리 (dev-wiki 의 content/ 폴더 구조) ─────
+-- parent_id 로 중첩, sort_order 로 같은 부모 안 순서, 소프트 삭제. 글은 category_id 로 한 카테고리에 속함 (null = 미분류)
+create table if not exists public.blog_categories (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  parent_id   uuid,
+  name        text not null check (char_length(name) between 1 and 30),
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  deleted_at  timestamptz,
+  unique (id, user_id),
+  foreign key (parent_id, user_id) references public.blog_categories (id, user_id)   -- 부모도 내 카테고리
+);
+create index if not exists blog_categories_user_idx    on public.blog_categories (user_id);
+create index if not exists blog_categories_deleted_idx on public.blog_categories (deleted_at) where deleted_at is not null;
+-- 남의 카테고리에 내 글을 붙이는 걸 DB 차원에서 막음
+alter table public.blog_posts drop constraint if exists blog_posts_category_fk;
+alter table public.blog_posts add constraint blog_posts_category_fk
+  foreign key (category_id, user_id) references public.blog_categories (id, user_id);
+create index if not exists blog_posts_category_idx on public.blog_posts (category_id) where category_id is not null;
+
 -- ── updated_at 자동 갱신 ───────────────────────────────
 drop trigger if exists blog_profiles_touch on public.blog_profiles;
 create trigger blog_profiles_touch before update on public.blog_profiles
@@ -77,15 +100,22 @@ create trigger blog_profiles_touch before update on public.blog_profiles
 drop trigger if exists blog_posts_touch on public.blog_posts;
 create trigger blog_posts_touch before update on public.blog_posts
   for each row execute function public.touch_updated_at();
+drop trigger if exists blog_categories_touch on public.blog_categories;
+create trigger blog_categories_touch before update on public.blog_categories
+  for each row execute function public.touch_updated_at();
 
--- ── 남용 방지 상한: 글 3,000 (삭제 대기 중인 행 포함) ──
+-- ── 남용 방지 상한: 글 3,000 / 카테고리 300 (삭제 대기 중인 행 포함) ──
 drop trigger if exists blog_posts_limit on public.blog_posts;
 create trigger blog_posts_limit before insert on public.blog_posts
   for each row execute function public.enforce_row_limit('3000');
+drop trigger if exists blog_categories_limit on public.blog_categories;
+create trigger blog_categories_limit before insert on public.blog_categories
+  for each row execute function public.enforce_row_limit('300');
 
 -- ── RLS ───────────────────────────────────────────────
-alter table public.blog_profiles enable row level security;
-alter table public.blog_posts    enable row level security;
+alter table public.blog_profiles   enable row level security;
+alter table public.blog_posts      enable row level security;
+alter table public.blog_categories enable row level security;
 
 -- 주인 정보: 누구나 읽음(아이디·블로그 이름·소개뿐), 쓰기는 본인만. delete 정책 없음 (탈퇴하면 cascade 로 지워짐)
 drop policy if exists "public select" on public.blog_profiles;
@@ -107,9 +137,21 @@ create policy "own insert"    on public.blog_posts for insert to authenticated w
 create policy "own update"    on public.blog_posts for update to authenticated
   using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 
+-- 카테고리: 내 것은 전부 / 남의 것은 살아 있는 것 누구나 (이름이 공개 사이드바에 보임). 쓰기는 본인만, delete 정책 없음
+drop policy if exists "own select"    on public.blog_categories;
+drop policy if exists "public select" on public.blog_categories;
+drop policy if exists "own insert"    on public.blog_categories;
+drop policy if exists "own update"    on public.blog_categories;
+create policy "own select"    on public.blog_categories for select to authenticated using (user_id = (select auth.uid()));
+create policy "public select" on public.blog_categories for select to anon, authenticated using (deleted_at is null);
+create policy "own insert"    on public.blog_categories for insert to authenticated with check (user_id = (select auth.uid()));
+create policy "own update"    on public.blog_categories for update to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+
 -- 로그인 안 한 방문자는 읽기만
-revoke insert, update, delete on public.blog_profiles from anon;
-revoke insert, update, delete on public.blog_posts    from anon;
+revoke insert, update, delete on public.blog_profiles   from anon;
+revoke insert, update, delete on public.blog_posts      from anon;
+revoke insert, update, delete on public.blog_categories from anon;
 
 -- ── 이미지 버킷: 공개 읽기, 쓰기는 내 폴더(<user_id>/…)에만, 5MB·이미지만 ──
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -146,8 +188,9 @@ begin
     raise exception 'not authenticated';
   end if;
   delete from storage.objects where bucket_id = 'blog-images' and (storage.foldername(name))[1] = uid::text;
-  delete from public.blog_posts    where user_id = uid;
-  delete from public.blog_profiles where user_id = uid;
+  delete from public.blog_posts      where user_id = uid;
+  delete from public.blog_categories where user_id = uid;
+  delete from public.blog_profiles   where user_id = uid;
 end $$;
 
 revoke all on function public.delete_blog_data() from public, anon;

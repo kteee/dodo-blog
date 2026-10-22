@@ -1,4 +1,4 @@
-import type { Post, Profile } from "../lib/types";
+import type { Category, Post, Profile } from "../lib/types";
 import { LIMITS } from "../lib/types";
 import type { Mine, PublicBlog, Repo } from "./repo";
 
@@ -9,14 +9,15 @@ type Deletable<T> = T & { deletedAt?: string | null };
 interface Stored {
   profile: Profile | null;
   posts: Deletable<Post>[];
+  categories?: Deletable<Category>[];
 }
 
 function read(): Stored {
   const raw = localStorage.getItem(KEY);
-  if (!raw) return { profile: null, posts: [] };
+  if (!raw) return { profile: null, posts: [], categories: [] };
   // 파싱이 실패하면 빈 값으로 덮어쓰지 않고 에러를 낸다 — 데이터 보존이 우선
   const s = JSON.parse(raw) as Stored;
-  return { profile: s.profile ?? null, posts: s.posts ?? [] };
+  return { profile: s.profile ?? null, posts: (s.posts ?? []).map((p) => ({ ...p, categoryId: p.categoryId ?? null })), categories: s.categories ?? [] };
 }
 
 function write(s: Stored) {
@@ -52,7 +53,7 @@ function toDataUrl(file: File): Promise<string> {
 export const localRepo: Repo = {
   async loadMine(): Promise<Mine> {
     const s = read();
-    return { profile: s.profile, posts: s.posts.filter(live).map(strip<Post>) };
+    return { profile: s.profile, posts: s.posts.filter(live).map(strip<Post>), categories: (s.categories ?? []).filter(live).map(strip<Category>) };
   },
   createProfile: (p) =>
     mutate((s) => {
@@ -81,6 +82,18 @@ export const localRepo: Repo = {
       const p = s.posts.find((x) => x.id === id);
       if (p) p.deletedAt = null;
     }),
+  insertCategory: (c) => mutate((s) => void (s.categories = [...(s.categories ?? []), { ...c, deletedAt: null }])),
+  updateCategory: (id, patch) =>
+    mutate((s) => {
+      const c = (s.categories ?? []).find((x) => x.id === id);
+      if (!c) throw new Error("category not found: " + id);
+      Object.assign(c, patch);
+    }),
+  deleteCategory: (id) =>
+    mutate((s) => {
+      const c = (s.categories ?? []).find((x) => x.id === id);
+      if (c) c.deletedAt = new Date().toISOString();
+    }),
   async uploadImage(file) {
     if (file.size > LIMITS.imageBytes) throw new Error("이미지는 5MB 까지 올릴 수 있어요");
     return toDataUrl(file);
@@ -94,7 +107,7 @@ export const localRepo: Repo = {
   async getBlog(handle): Promise<PublicBlog | null> {
     const s = read();
     if (!s.profile || s.profile.handle !== handle) return null;
-    return { profile: s.profile, posts: s.posts.filter(live).map(strip<Post>).filter((p) => p.status === "public") };
+    return { profile: s.profile, posts: s.posts.filter(live).map(strip<Post>).filter((p) => p.status === "public"), categories: (s.categories ?? []).filter(live).map(strip<Category>) };
   },
   async handleTaken(handle) {
     return read().profile?.handle === handle;

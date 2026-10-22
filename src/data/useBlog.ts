@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Post, Profile } from "../lib/types";
-import { LIMITS, slugify, uniqueSlug, utf8Bytes, uuid } from "../lib/types";
+import type { Category, Post, Profile } from "../lib/types";
+import { LIMITS, childrenOf, slugify, subtreeIds, uniqueSlug, utf8Bytes, uuid } from "../lib/types";
 import type { Repo } from "./repo";
 import { describeError, report } from "../lib/monitoring";
 
@@ -36,12 +36,14 @@ type PostPatch = Partial<Omit<Post, "id" | "createdAt">>;
 export function useBlog(repo: Repo | null) {
   const [profile, setProfileState] = useState<Profile | null>(null);
   const [posts, setPostsState] = useState<Post[]>([]);
+  const [categories, setCategoriesState] = useState<Category[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [net, setNet] = useState<{ offline: boolean; waiting: number }>({ offline: false, waiting: 0 });
 
   const postsRef = useRef(posts);
   const profileRef = useRef(profile);
+  const catsRef = useRef(categories);
   const pending = useRef(0);
   const dirty = useRef(new Set<string>());
   const toastSeq = useRef(0);
@@ -52,6 +54,10 @@ export function useBlog(repo: Repo | null) {
   const setPosts = (next: Post[]) => {
     postsRef.current = next;
     setPostsState(next);
+  };
+  const setCategories = (next: Category[]) => {
+    catsRef.current = next;
+    setCategoriesState(next);
   };
   const setProfile = (next: Profile | null) => {
     profileRef.current = next;
@@ -85,6 +91,7 @@ export function useBlog(repo: Repo | null) {
           stale.current = false;
           setProfile(mine.profile);
           setPosts(mine.posts);
+          setCategories(mine.categories);
           setStatus("ready");
         } catch (e) {
           report(e, "load");
@@ -104,6 +111,7 @@ export function useBlog(repo: Repo | null) {
   useEffect(() => {
     setProfile(null);
     setPosts([]);
+    setCategories([]);
     if (repo) reload(false);
     else setStatus("idle");
   }, [repo, reload]);
@@ -240,7 +248,7 @@ export function useBlog(repo: Repo | null) {
         save(() => repo.updateProfile(patch));
       },
       /** 새 임시글 — 바로 저장됨 (빈 글도 한 행). 돌아올 때 비어 있으면 discardEmpty 로 지움 */
-      createPost(init: Partial<Pick<Post, "title" | "body" | "tags">> = {}): string {
+      createPost(init: Partial<Pick<Post, "title" | "body" | "tags" | "categoryId">> = {}): string {
         const now = new Date().toISOString();
         const p: Post = {
           id: uuid(),
@@ -248,6 +256,7 @@ export function useBlog(repo: Repo | null) {
           title: init.title ?? "",
           body: init.body ?? "",
           tags: init.tags ?? [],
+          categoryId: init.categoryId ?? null,
           status: "draft",
           publishedAt: null,
           createdAt: now,
@@ -312,6 +321,7 @@ export function useBlog(repo: Repo | null) {
             title: it.title.slice(0, LIMITS.title),
             body: it.body,
             tags: it.tags.slice(0, LIMITS.tags),
+            categoryId: null,
             status: publish ? "public" : "draft",
             publishedAt: publish ? when : null,
             createdAt: when,
@@ -328,6 +338,65 @@ export function useBlog(repo: Repo | null) {
         for (const p of made) save(() => repo.insertPost(p));
         return made.length;
       },
+      /* ── 카테고리 (dev-wiki 폴더) ── */
+      addCategory(name: string, parentId: string | null): string {
+        const siblings = childrenOf(catsRef.current, parentId);
+        const c: Category = {
+          id: uuid(),
+          name: name.trim().slice(0, LIMITS.category) || "새 카테고리",
+          parentId,
+          order: siblings.length ? Math.max(...siblings.map((s) => s.order)) + 1 : 0,
+          createdAt: new Date().toISOString(),
+        };
+        setCategories([...catsRef.current, c]);
+        save(() => repo.insertCategory(c));
+        return c.id;
+      },
+      renameCategory(id: string, name: string) {
+        const c = catsRef.current.find((x) => x.id === id);
+        const n = name.trim().slice(0, LIMITS.category);
+        if (!c || !n || n === c.name) return;
+        setCategories(catsRef.current.map((x) => (x.id === id ? { ...x, name: n } : x)));
+        save(() => repo.updateCategory(id, { name: n }));
+      },
+      /** 같은 부모 안에서 한 칸 위/아래 (이웃과 order 를 맞바꿈) */
+      moveCategory(id: string, dir: -1 | 1) {
+        const c = catsRef.current.find((x) => x.id === id);
+        if (!c) return;
+        const sib = childrenOf(catsRef.current, c.parentId);
+        const i = sib.findIndex((x) => x.id === id);
+        const j = i + dir;
+        if (i < 0 || j < 0 || j >= sib.length) return;
+        // order 가 같은 것끼리(이름순 정렬 상태)는 자리 번호를 새로 매겨서 바꿈
+        const reordered = [...sib];
+        [reordered[i], reordered[j]] = [reordered[j], reordered[i]];
+        const patches = reordered.map((x, k) => ({ id: x.id, order: k })).filter((p) => catsRef.current.find((x) => x.id === p.id)!.order !== p.order);
+        setCategories(catsRef.current.map((x) => {
+          const p = patches.find((q) => q.id === x.id);
+          return p ? { ...x, order: p.order } : x;
+        }));
+        for (const p of patches) save(() => repo.updateCategory(p.id, { order: p.order }));
+      },
+      /** 삭제: 안의 글은 미분류로, 하위 카테고리는 한 단계 위로 올린 뒤 소프트 삭제 */
+      deleteCategory(id: string) {
+        const c = catsRef.current.find((x) => x.id === id);
+        if (!c) return;
+        const kids = catsRef.current.filter((x) => x.parentId === id);
+        setCategories(catsRef.current.filter((x) => x.id !== id).map((x) => (x.parentId === id ? { ...x, parentId: c.parentId } : x)));
+        for (const k of kids) save(() => repo.updateCategory(k.id, { parentId: c.parentId }));
+        const inIt = postsRef.current.filter((p) => p.categoryId === id);
+        if (inIt.length) {
+          setPosts(postsRef.current.map((p) => (p.categoryId === id ? { ...p, categoryId: null } : p)));
+          for (const p of inIt) save(() => repo.updatePost(p.id, { categoryId: null }));
+        }
+        save(() => repo.deleteCategory(id));
+        toast(`[${short(c.name)}]${iGa(short(c.name))} 삭제되었습니다.` + (inIt.length ? ` 글 ${inIt.length}개는 미분류로.` : ""));
+      },
+      /** 이 카테고리 아래 글 수 (하위 포함) */
+      countIn(id: string, pub: boolean): number {
+        const ids = subtreeIds(catsRef.current, id);
+        return postsRef.current.filter((p) => p.categoryId && ids.has(p.categoryId) && (!pub || p.status === "public")).length;
+      },
       async uploadImage(file: File): Promise<string> {
         return repo.uploadImage(file);
       },
@@ -340,12 +409,13 @@ export function useBlog(repo: Repo | null) {
         await repo.deleteBlogData();
         setProfile(null);
         setPosts([]);
+        setCategories([]);
       },
       async deleteAccount() {
         await repo.deleteAccount();
       },
       exportJson() {
-        const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), profile: profileRef.current, posts: postsRef.current }, null, 2)], {
+        const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), profile: profileRef.current, categories: catsRef.current, posts: postsRef.current }, null, 2)], {
           type: "application/json",
         });
         const a = document.createElement("a");
@@ -358,7 +428,7 @@ export function useBlog(repo: Repo | null) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repo, save, toast]);
 
-  return { profile, posts, status, toasts, net, dismiss, actions, retry: () => reload(false) };
+  return { profile, posts, categories, status, toasts, net, dismiss, actions, retry: () => reload(false) };
 }
 
 export type Actions = NonNullable<ReturnType<typeof useBlog>["actions"]>;

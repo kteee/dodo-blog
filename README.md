@@ -21,6 +21,7 @@
 | `/blog/my` · `/blog/privacy` | 블로그 이름·소개 수정, 데이터 내보내기(JSON), 회원 탈퇴 / 개인정보 처리방침 |
 
 - 주소 체계와 경로 헬퍼는 `src/lib/paths.ts` (`app()`, `blogHome()`, `postUrl()`). 글쓰기 화면(`/blog/write·edit·import·my`)은 `<meta name="robots" content="noindex">`
+- **카테고리 폴더 트리** (dev-wiki 의 content/ 폴더): 사이드바에 1단계는 고정 제목, 그 아래는 접히는 트리(최대 3단계) + 카테고리 밑에 글 목록. 보고 있는 글이 있는 가지는 펼쳐짐. 주인은 ＋ 카테고리 / ⋯(이름 바꾸기·하위 추가·위로·아래로·삭제). 삭제하면 글은 미분류, 하위는 한 단계 위로. 에디터의 카테고리 칸은 바로 저장. 글 머리와 목록 제목에 경로(C# / 기초)
 - 로그인 안 한 손님도 `/@<아이디>` 와 공개 글은 볼 수 있음 (헤더에 작은 로그인 버튼)
 - 글 주소(slug)는 **공개할 때 제목에서** 만듦 (한글 그대로, 공백은 `-`). 겹치면 `-2`. ⋯ > 주소 바꾸기로 직접 지정 가능
 - 삭제는 **소프트 삭제** + "실행 취소" 토스트. 30일 뒤 영구 삭제. 임시글은 제목·본문 없이 나가면 조용히 지움
@@ -58,6 +59,7 @@ http://localhost:5180/blog (투두 5175 · 북로그 5177 · 홈 5178). `/` 는 
    - 투두 `supabase/migrations/008_account.sql` 이 먼저 실행돼 있어야 "두두 계정 탈퇴"가 블로그 기록까지 지운다 (008 은 `delete_blog_data` 가 있으면 부름)
 2. 30일 지난 삭제분 파기: `supabase/migrations/002_purge_deleted.sql` 실행 (pg_cron 은 투두 005 에서 이미 켜져 있음)
    - 001 을 주소 변경 전에 실행했다면 `003_handle_reserved.sql` 도 실행 (예약어 목록 축소)
+   - 카테고리: 001 을 이미 실행한 프로젝트는 `004_categories.sql` 실행 (`blog_categories` 테이블 + `blog_posts.category_id`, 파기 예약·`delete_blog_data` 갱신). **앱이 category_id 를 읽고 쓰므로 배포 전에 꼭**
 3. **Authentication → URL Configuration → Redirect URLs** 에 추가:
    - `https://dododiary.com/blog`
    - `http://localhost:5180/blog` (개발용)
@@ -129,7 +131,8 @@ src/
   App.tsx                 경로별 화면, 로그인 게이트, 내 블로그/남의 블로그 분기, 사이드 접기
   components/TopNav.tsx   헤더 (투두와 같은 구조. 손님에겐 작은 로그인 버튼)
   components/Landing.tsx  로그인 전 소개 · 블로그 만들기(아이디 검사·중복 확인)
-  components/Blog.tsx     사이드(이름·태그·달) · 글 목록 · 글 보기(목차) · 글꼴 메뉴
+  components/Blog.tsx     사이드(카테고리 트리·임시글·태그·달) · 글 목록 · 글 보기(목차·경로)
+  components/CategoryTree.tsx 폴더 트리 + 관리(추가·이름·순서·삭제)
   components/Editor.tsx   에디터 (툴바·자동 저장·이미지·공개/비공개·주소·삭제)
   components/TablePanel.tsx 표 편집 격자
   components/Markdown.tsx 마크다운 렌더 훅 · 목차
@@ -144,7 +147,7 @@ src/
   hooks/useRoute.ts       pushState 기반 경로
   styles.css              앞부분은 투두 styles.css 공통 부분 그대로, "블로그 전용" 부터가 이 서비스 것
 supabase/schema.sql       전체 스키마 (= migrations/001_blog.sql)
-supabase/migrations/      001 테이블·RLS·상한·버킷, 002 30일 파기(pg_cron)
+supabase/migrations/      001 테이블·RLS·상한·버킷, 002 30일 파기(pg_cron), 003 예약어 축소, 004 카테고리 트리
 public/_headers           CSP(img-src https: — 글에 적은 외부 이미지 허용)·HSTS·캐시 규칙 (/blog/assets/*)
 vite.config.ts            base /blog/, outDir dist/blog + 개발 서버용 /@… 폴백·/ → /blog 리다이렉트
 scripts/postbuild.mjs     dist/blog/index.html → dist/index.html(SPA 폴백), _headers 를 dist 루트로
@@ -161,6 +164,6 @@ wrangler.jsonc            라우트 dododiary.com/@* · /%40* · /blog*, html_ha
 | 자동저장 전에 탭 닫음 | 닫기 경고 + 숨길 때 즉시 저장 + fetch keepalive |
 | 남의 임시글 접근 | RLS: 남의 글은 `public` 만. 임시글·삭제분은 본인만 |
 | 남이 쓴 글의 스크립트 | DOMPurify 로 script·이벤트 속성 제거 + CSP `script-src 'self'` |
-| 한 계정이 DB 용량을 채움 | 사용자당 글 3천 · 본문 100KB · 태그 10 · 이미지 5MB (버킷 설정) |
+| 한 계정이 DB 용량을 채움 | 사용자당 글 3천 · 카테고리 300 · 본문 100KB · 태그 10 · 이미지 5MB (버킷 설정) |
 | 아이디 충돌·예약어 | DB `blog_handle_ok` 체크 + 유니크 + 화면에서 0.4초 디바운스 중복 확인 |
 | 데이터 갇힘 | 마이페이지 → 데이터 내보내기 (JSON) |

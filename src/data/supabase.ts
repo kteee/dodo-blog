@@ -1,5 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
-import type { Post, Profile } from "../lib/types";
+import type { Category, Post, Profile } from "../lib/types";
 import { LIMITS, uuid } from "../lib/types";
 import type { Mine, PublicBlog, Repo } from "./repo";
 
@@ -49,18 +49,20 @@ interface PostRow {
   title: string;
   body_md: string;
   tags: string[] | null;
+  category_id: string | null;
   status: Post["status"];
   published_at: string | null;
   created_at: string;
   updated_at: string;
 }
-const POST_COLS = "id,slug,title,body_md,tags,status,published_at,created_at,updated_at";
+const POST_COLS = "id,slug,title,body_md,tags,category_id,status,published_at,created_at,updated_at";
 const postFromRow = (r: PostRow): Post => ({
   id: r.id,
   slug: r.slug,
   title: r.title,
   body: r.body_md,
   tags: r.tags ?? [],
+  categoryId: r.category_id,
   status: r.status,
   publishedAt: r.published_at,
   createdAt: r.created_at,
@@ -73,6 +75,7 @@ function postToRow(p: Partial<Omit<Post, "id" | "createdAt">>) {
   if (p.title !== undefined) r.title = p.title;
   if (p.body !== undefined) r.body_md = p.body;
   if (p.tags !== undefined) r.tags = p.tags;
+  if (p.categoryId !== undefined) r.category_id = p.categoryId;
   if (p.status !== undefined) r.status = p.status;
   if (p.publishedAt !== undefined) r.published_at = p.publishedAt;
   // updated_at 은 DB 트리거가 채움
@@ -99,6 +102,21 @@ async function selectPosts(opts: { userId: string; publicOnly: boolean }): Promi
   }
 }
 
+interface CategoryRow {
+  id: string;
+  parent_id: string | null;
+  name: string;
+  sort_order: number;
+  created_at: string;
+}
+const CAT_COLS = "id,parent_id,name,sort_order,created_at";
+const catFromRow = (r: CategoryRow): Category => ({ id: r.id, name: r.name, parentId: r.parent_id, order: r.sort_order, createdAt: r.created_at });
+
+async function selectCategories(userId: string): Promise<Category[]> {
+  const { data } = check(await supabase!.from("blog_categories").select(CAT_COLS).eq("user_id", userId).is("deleted_at", null).order("sort_order").range(0, 999));
+  return ((data ?? []) as unknown as CategoryRow[]).map(catFromRow);
+}
+
 const EXT: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/gif": "gif", "image/webp": "webp", "image/avif": "avif", "image/svg+xml": "svg" };
 
 /** 올린 이미지 파일 전부 삭제 (auth.users 를 지우거나 목록 행을 지워도 파일은 자동으로 안 사라짐). 실패해도 삭제·탈퇴는 진행 */
@@ -123,13 +141,15 @@ export function supabaseRepo(): Repo {
   const db = supabase!;
   return {
     async loadMine(): Promise<Mine> {
-      const [profile, posts] = await Promise.all([
-        db.from("blog_profiles").select(PROFILE_COLS).maybeSingle(),
-        // 공개 글 읽기 정책 때문에 조건 없이 읽으면 남의 공개 글도 섞여 옴 → 내 user_id 로 거름
-        db.auth.getUser().then(({ data }) => selectPosts({ userId: data.user?.id ?? "", publicOnly: false })),
+      // 공개 읽기 정책 때문에 조건 없이 읽으면 남의 것도 섞여 옴 → 내 user_id 로 거름
+      const uid = (await db.auth.getUser()).data.user?.id ?? "";
+      const [profile, posts, categories] = await Promise.all([
+        db.from("blog_profiles").select(PROFILE_COLS).eq("user_id", uid).maybeSingle(),
+        selectPosts({ userId: uid, publicOnly: false }),
+        selectCategories(uid),
       ]);
       check(profile);
-      return { profile: profile.data ? profileFromRow(profile.data as ProfileRow) : null, posts };
+      return { profile: profile.data ? profileFromRow(profile.data as ProfileRow) : null, posts, categories };
     },
     async createProfile(p) {
       // user_id 는 DB 기본값(auth.uid())
@@ -150,6 +170,19 @@ export function supabaseRepo(): Repo {
     },
     async restorePost(id) {
       check(await db.from("blog_posts").update({ deleted_at: null }).eq("id", id));
+    },
+    async insertCategory(c) {
+      check(await db.from("blog_categories").insert({ id: c.id, parent_id: c.parentId, name: c.name, sort_order: c.order }));
+    },
+    async updateCategory(id, patch) {
+      const r: Record<string, unknown> = {};
+      if (patch.name !== undefined) r.name = patch.name;
+      if (patch.parentId !== undefined) r.parent_id = patch.parentId;
+      if (patch.order !== undefined) r.sort_order = patch.order;
+      check(await db.from("blog_categories").update(r).eq("id", id));
+    },
+    async deleteCategory(id) {
+      check(await db.from("blog_categories").update({ deleted_at: new Date().toISOString() }).eq("id", id));
     },
     async uploadImage(file) {
       const ext = EXT[file.type];
@@ -176,8 +209,8 @@ export function supabaseRepo(): Repo {
       const prof = check(await db.from("blog_profiles").select(PROFILE_COLS).eq("handle", handle).maybeSingle());
       if (!prof.data) return null;
       const row = prof.data as ProfileRow;
-      const posts = await selectPosts({ userId: row.user_id, publicOnly: true });
-      return { profile: profileFromRow(row), posts };
+      const [posts, categories] = await Promise.all([selectPosts({ userId: row.user_id, publicOnly: true }), selectCategories(row.user_id)]);
+      return { profile: profileFromRow(row), posts, categories };
     },
     async handleTaken(handle) {
       const { data } = check(await db.from("blog_profiles").select("handle").eq("handle", handle).maybeSingle());

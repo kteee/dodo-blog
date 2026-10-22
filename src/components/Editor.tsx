@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
-import type { Post, Profile } from "../lib/types";
-import { LIMITS, utf8Bytes } from "../lib/types";
+import type { Category, Post, Profile } from "../lib/types";
+import { LIMITS, childrenOf, utf8Bytes } from "../lib/types";
 import type { Actions } from "../data/useBlog";
 import { ACTIONS, handleEnter, handleTab, insertCodeBlock, insertTable, replaceRange, type ActionName, type Sel } from "../lib/editorOps";
 import { Markdown, useMarkdown } from "./Markdown";
@@ -14,6 +14,7 @@ import { blogHome, postUrl, showUrl } from "../lib/paths";
 interface Props {
   profile: Profile;
   post: Post;
+  categories: Category[];
   actions: Actions;
   unfold: ReactNode;
   /** 블로그 목록으로 */
@@ -49,7 +50,12 @@ const ICONS: Partial<Record<ActionName | "image" | "table", ReactNode>> = {
 };
 
 /** 글 하나를 쓰는 화면: 제목 · 태그 · 툴바 · 본문(textarea) | 미리보기. 0.5초 멈추면 자동 저장 */
-export function Editor({ profile, post, actions, unfold, onBack }: Props) {
+/** <select> 용: 트리를 들여쓴 한 줄 목록으로 */
+function flatCats(cats: Category[], parentId: string | null = null, depth = 0): { c: Category; depth: number }[] {
+  return childrenOf(cats, parentId).flatMap((c) => [{ c, depth }, ...flatCats(cats, c.id, depth + 1)]);
+}
+
+export function Editor({ profile, post, categories, actions, unfold, onBack }: Props) {
   const phone = usePhone();
   const [title, setTitle] = useState(post.title);
   const [tagText, setTagText] = useState(post.tags.join(", "));
@@ -433,17 +439,28 @@ export function Editor({ profile, post, actions, unfold, onBack }: Props) {
           touch();
         }}
       />
-      <input
-        className="ed-tags"
-        type="text"
-        value={tagText}
-        placeholder="태그 (쉼표로 구분)"
-        onChange={(e) => {
-          setTagText(e.target.value);
-          touch();
-        }}
-        onBlur={() => setTagText(parseTags(tagText).join(", "))}
-      />
+      <div className="ed-meta">
+        {/* 카테고리: dev-wiki 의 "경로" 칸 — 바로 저장 */}
+        <select className="ed-cat" value={post.categoryId ?? ""} aria-label="카테고리" onChange={(e) => actions.updatePost(post.id, { categoryId: e.target.value || null })}>
+          <option value="">미분류</option>
+          {flatCats(categories).map(({ c, depth }) => (
+            <option key={c.id} value={c.id}>
+              {"\u00a0\u00a0".repeat(depth) + (depth ? "└ " : "") + c.name}
+            </option>
+          ))}
+        </select>
+        <input
+          className="ed-tags"
+          type="text"
+          value={tagText}
+          placeholder="태그 (쉼표로 구분)"
+          onChange={(e) => {
+            setTagText(e.target.value);
+            touch();
+          }}
+          onBlur={() => setTagText(parseTags(tagText).join(", "))}
+        />
+      </div>
 
       {phone && (
         <div className="ed-tabs" role="tablist">

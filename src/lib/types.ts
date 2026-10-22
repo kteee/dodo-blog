@@ -9,6 +9,46 @@ export interface Profile {
 
 export type PostStatus = "draft" | "public";
 
+/** 카테고리 — dev-wiki 의 폴더. parentId 로 중첩, order 로 같은 부모 안 순서 */
+export interface Category {
+  id: string;
+  name: string;
+  parentId: string | null;
+  order: number;
+  createdAt: string;
+}
+
+/** 트리 깊이 상한 (최상위 = 1) */
+export const MAX_DEPTH = 3;
+
+/** 같은 부모 안에서 order → 이름 순 */
+export function childrenOf(cats: Category[], parentId: string | null): Category[] {
+  return cats.filter((c) => c.parentId === parentId).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ko"));
+}
+/** 이 카테고리와 그 아래 전부의 id */
+export function subtreeIds(cats: Category[], id: string): Set<string> {
+  const out = new Set<string>([id]);
+  const walk = (pid: string) => {
+    for (const c of cats) if (c.parentId === pid && !out.has(c.id)) {
+      out.add(c.id);
+      walk(c.id);
+    }
+  };
+  walk(id);
+  return out;
+}
+/** 최상위부터 이 카테고리까지의 경로 */
+export function pathOf(cats: Category[], id: string | null): Category[] {
+  const out: Category[] = [];
+  let cur = cats.find((c) => c.id === id);
+  while (cur) {
+    out.unshift(cur);
+    cur = cats.find((c) => c.id === cur!.parentId);
+  }
+  return out;
+}
+export const depthOf = (cats: Category[], id: string | null) => pathOf(cats, id).length;
+
 export interface Post {
   id: string;
   /** 주소 조각. 임시글은 "" (공개할 때 제목에서 만듦) */
@@ -16,6 +56,8 @@ export interface Post {
   title: string;
   body: string;
   tags: string[];
+  /** 속한 카테고리. null = 미분류 */
+  categoryId: string | null;
   status: PostStatus;
   /** 처음 공개한 시각 (목록 정렬·날짜 표시 기준). 임시글은 null */
   publishedAt: string | null;
@@ -35,6 +77,7 @@ export const LIMITS = {
   bodyBytes: 100 * 1024,
   tags: 10,
   tag: 20,
+  category: 30,
   /** 이미지 한 장 (Storage 버킷 설정과 같음) */
   imageBytes: 5 * 1024 * 1024,
 } as const;

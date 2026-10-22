@@ -63,7 +63,7 @@ export default function App() {
   const anyRepo = useMemo(() => (isLocal ? localRepo : supabase ? supabaseRepo() : null), [isLocal]);
   const repo = useMemo(() => (!userId ? null : isLocal ? localRepo : supabaseRepo()), [userId, isLocal]);
   const store = useBlog(repo);
-  const { profile, posts, actions } = store;
+  const { profile, posts, categories, actions } = store;
 
   const path = useRoute();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -134,7 +134,9 @@ export default function App() {
 
   const account = auth.status === "in" ? auth.account : null;
   // 공개 블로그 화면(/@아이디)에선 헤더 워드마크 자리에 그 블로그 제목 (앱 화면은 시리즈 규칙대로 DoDo·BLOG)
-  const blog = isOwner && profile ? { profile, posts } : pub.data?.blog ?? null;
+  const blog = isOwner && profile ? { profile, posts, categories } : pub.data?.blog ?? null;
+  const treeActions = isOwner && actions ? { add: actions.addCategory, rename: actions.renameCategory, move: actions.moveCategory, remove: actions.deleteCategory } : undefined;
+  const current = handle && slug ? blog?.posts.find((p) => p.slug === slug) ?? null : null;
   const brand = !isApp && blog ? { title: blog.profile.title, href: blogHome(blog.profile.handle) } : undefined;
   // 블로그 화면 헤더 검색: 그 블로그의 글 (주인이면 임시글도 — 고르면 에디터로)
   const search = !isApp && blog ? (
@@ -203,6 +205,7 @@ export default function App() {
           key={post.id}
           profile={profile}
           post={post}
+          categories={categories}
           actions={actions}
           unfold={null}
           onBack={() => {
@@ -241,13 +244,25 @@ export default function App() {
     main = !post ? (
       <NotFound text="글을 찾을 수 없어요" href={blogHome(blog.profile.handle)} />
     ) : (
-      <PostView profile={blog.profile} post={post} isOwner={isOwner} unfold={unfold} onEdit={isOwner ? () => go(app("/edit/" + post.id)) : undefined} />
+      <PostView
+        profile={blog.profile}
+        post={post}
+        categories={blog.categories}
+        onCategory={(id) => {
+          setFilter({ category: id, tag: null, month: null });
+          go(blogHome(blog.profile.handle));
+        }}
+        isOwner={isOwner}
+        unfold={unfold}
+        onEdit={isOwner ? () => go(app("/edit/" + post.id)) : undefined}
+      />
     );
   } else {
     main = (
       <PostList
         profile={blog.profile}
         posts={blog.posts}
+        categories={blog.categories}
         filter={filter}
         isOwner={isOwner}
         unfold={unfold}
@@ -268,10 +283,19 @@ export default function App() {
                 <SideIcon />
               </button>
             </div>
-            <BlogSide posts={blog.posts} filter={filter} onFilter={(f) => {
-              setFilter(f);
-              if (slug) go(blogHome(blog.profile.handle));
-            }} isOwner={isOwner} />
+            <BlogSide
+              handle={blog.profile.handle}
+              posts={blog.posts}
+              categories={blog.categories}
+              filter={filter}
+              onFilter={(f) => {
+                setFilter(f);
+                if (slug) go(blogHome(blog.profile.handle));
+              }}
+              currentPostId={current?.id ?? null}
+              isOwner={isOwner}
+              treeActions={treeActions}
+            />
           </aside>
         )}
         <main className="main">{main}</main>
