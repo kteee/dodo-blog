@@ -18,7 +18,7 @@ export const NO_FILTER: Filter = { category: null, tag: null, month: null };
 /** 글 날짜(공개일, 임시글은 수정일)로 달 묶기 */
 const dateOf = (p: Post) => p.publishedAt ?? p.updatedAt;
 
-/* ── 왼쪽 사이드: 전체/임시글 → 태그 → 달 (블로그 제목은 헤더에) ── */
+/* ── 왼쪽 사이드: 카테고리 트리 → 태그 (블로그 제목은 헤더에. 임시글은 주인 목록에 함께, 달은 없음) ── */
 interface SideProps {
   handle: string;
   posts: Post[];
@@ -35,40 +35,17 @@ export function BlogSide({ handle, posts, categories, filter, onFilter, currentP
     for (const p of pub) for (const t of p.tags) m.set(t, (m.get(t) ?? 0) + 1);
     return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
   }, [pub]);
-  const months = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const p of pub) {
-      const k = monthKey(dateOf(p));
-      m.set(k, (m.get(k) ?? 0) + 1);
-    }
-    return [...m.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [pub]);
-  const drafts = isOwner ? posts.filter((p) => p.status === "draft").length : 0;
   return (
     <>
       <CategoryTree
         handle={handle}
         categories={categories}
         posts={posts}
-        selected={filter.tag || filter.month ? "__x" : filter.category}
+        selected={filter.tag ? "__x" : filter.category}
         onSelect={(id) => onFilter({ category: id, tag: null, month: null })}
         currentPostId={currentPostId}
         isOwner={isOwner}
       />
-      <div>
-        <ul className="cats">
-          {isOwner && (
-            <li>
-              <button className={"cat" + (filter.tag === "__draft" ? " on" : "")} onClick={() => onFilter({ category: null, tag: "__draft", month: null })}>
-                <span className="sq" aria-hidden="true" />
-                <span className="nm">임시글</span>
-                <span className="n">{drafts}</span>
-                <span />
-              </button>
-            </li>
-          )}
-        </ul>
-      </div>
       {tags.length > 0 && (
         <div>
           <p className="sect-label">태그</p>
@@ -80,25 +57,6 @@ export function BlogSide({ handle, posts, categories, filter, onFilter, currentP
                     #
                   </span>
                   <span className="nm">{t}</span>
-                  <span className="n">{n}</span>
-                  <span />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {months.length > 0 && (
-        <div>
-          <p className="sect-label">달</p>
-          <ul className="cats">
-            {months.map(([k, n]) => (
-              <li key={k}>
-                <button className={"cat" + (filter.month === k ? " on" : "")} onClick={() => onFilter({ category: null, tag: null, month: filter.month === k ? null : k })}>
-                  <span className="hash" aria-hidden="true">
-                    ·
-                  </span>
-                  <span className="nm">{k.replace("-", ". ")}</span>
                   <span className="n">{n}</span>
                   <span />
                 </button>
@@ -127,8 +85,8 @@ export function PostList({ profile, posts, categories, filter, isOwner, onNew, o
     let l = posts;
     if (filter.tag === "__draft") l = l.filter((p) => p.status === "draft");
     else {
-      // 카테고리로 거를 땐 주인은 임시글도 (트리 숫자와 맞게), 아니면 공개 글만
-      if (!isOwner || !filter.category) l = l.filter((p) => p.status === "public");
+      // 주인은 임시글도 함께 보임 (목록에 '임시글' 표시, 누르면 에디터). 손님은 공개 글만
+      if (!isOwner) l = l.filter((p) => p.status === "public");
       if (filter.category === "__none") l = l.filter((p) => !p.categoryId);
       else if (filter.category) {
         const ids = subtreeIds(categories, filter.category);
@@ -198,6 +156,7 @@ export function PostList({ profile, posts, categories, filter, isOwner, onNew, o
                   <a className="post-link" href={href} onClick={onLinkClick}>
                     <span className="post-title">{p.title || "제목 없음"}</span>
                     <span className="post-meta">
+                      {p.status === "draft" && <span className="post-tag draft">임시글</span>}
                       <time dateTime={dateOf(p)}>{postDate(p)}</time>
                       {p.tags.map((t) => (
                         <span key={t} className="post-tag">

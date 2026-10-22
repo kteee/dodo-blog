@@ -821,3 +821,6 @@ details[open] > summary .ct-chev svg{transform:rotate(90deg)}
 .ed-body{min-height:60vh}
 .ed-preview{min-height:60vh; background:var(--bg)}
 /* 트리 들여쓰기: 한 단계 14px. 글 줄은 화살표 칸(16px)만큼 바깥 여백 → hover 상자가 카테고리 이름 상자와 같은 선에서 시작 */
+
+/* 사이드바 hover 배경 더 연하게 (--panel 과 --panel-2 의 중간). 고른 줄(.on)은 그대로 --panel-2 */
+.ct-name:hover, .ct-link:hover, .side .cat:hover{background:color-mix(in oklab, var(--panel) 65%, var(--panel-2))}
