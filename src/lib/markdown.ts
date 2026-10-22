@@ -29,14 +29,23 @@ const PURIFY_OPTS = {
   USE_PROFILES: { html: true },
   // 글 안의 링크는 새 탭 + 유출 방지 (아래 hook 에서 붙임)
   ADD_ATTR: ["target", "rel", "align"],
-  FORBID_TAGS: ["style", "form", "input", "button", "iframe", "object", "embed"],
+  // input 은 체크리스트(- [ ])의 체크박스만 살림 — 아래 hook 에서 type=checkbox 아닌 건 지우고, 읽기 전용으로
+  FORBID_TAGS: ["style", "form", "button", "iframe", "object", "embed", "select", "textarea"],
 };
 
 let hooked = false;
 function ensureHooks() {
   if (hooked) return;
   hooked = true;
+  DOMPurify.addHook("uponSanitizeElement", (node, data) => {
+    if (data.tagName === "input" && (node as Element).getAttribute?.("type") !== "checkbox") node.parentNode?.removeChild(node);
+  });
   DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+    if (node.tagName === "INPUT") {
+      node.setAttribute("disabled", "");
+      node.removeAttribute("name");
+      node.removeAttribute("value");
+    }
     if (node.tagName === "A") {
       const href = node.getAttribute("href") || "";
       // 같은 사이트 주소(#목차, /아이디)는 그대로, 바깥 링크는 새 탭

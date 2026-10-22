@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import type { Category, Post, Profile } from "../lib/types";
 import { excerpt, fmtDate, monthKey, pathOf, postDate, sortPosts, subtreeIds } from "../lib/types";
 import { CategoryTree } from "./CategoryTree";
-import { go, onLinkClick } from "../hooks/useRoute";
+import { onLinkClick } from "../hooks/useRoute";
 import { Markdown, Toc, useMarkdown } from "./Markdown";
 import { app, blogHome, postUrl } from "../lib/paths";
 
@@ -206,6 +206,16 @@ export function PostView({ profile, post, categories, onCategory, isOwner, onEdi
               <span className="sep">/</span>
               <span className="cur">{post.title || "제목 없음"}</span>
             </nav>
+            {/* 날짜·태그는 제목 아래가 아니라 경로 줄 오른쪽 (dev-wiki 처럼 제목 바로 아래 본문) */}
+            <p className="post-meta">
+              {post.status === "draft" && <span className="post-tag draft">임시글</span>}
+              {post.tags.map((t) => (
+                <span key={t} className="post-tag">
+                  #{t}
+                </span>
+              ))}
+              <time dateTime={dateOf(post)}>{fmtDate(dateOf(post))}</time>
+            </p>
             {isOwner && onEdit && (
               <button className="wbtn sm" onClick={onEdit}>
                 편집
@@ -214,18 +224,6 @@ export function PostView({ profile, post, categories, onCategory, isOwner, onEdi
           </div>
           <header className="post-head">
             <h1 className="post-h1">{post.title || "제목 없음"}</h1>
-            <p className="post-meta">
-              <time dateTime={dateOf(post)}>{fmtDate(dateOf(post))}</time>
-              {post.tags.map((t) => (
-                <a key={t} className="post-tag" href={home} onClick={(e) => {
-                  onLinkClick(e);
-                  go(home);
-                }}>
-                  #{t}
-                </a>
-              ))}
-              {post.status === "draft" && <span className="post-tag draft">임시글</span>}
-            </p>
           </header>
           <Markdown html={html} />
         </div>

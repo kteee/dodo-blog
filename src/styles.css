@@ -919,3 +919,50 @@ summary.ct-row:hover .ct-chev{color:var(--ink)}
 }
 /* 목록 화면 본문 폭: dev-wiki .content(최대 1080, 좌우 3rem) 안쪽 = 984px */
 @media (min-width:821px){ .main > .toolbar, .main > .scroll{max-width:984px} }
+
+/* ══ 글 머리·본문 여백을 dev-wiki article 과 같게 ══ */
+.post-head{margin:0 0 1rem; padding:0; border:0}
+.post-h1{font-size:2.1rem; font-weight:600; letter-spacing:-.02em; line-height:1.65; margin:0}
+.post-head .post-meta{margin:-.2rem 0 0; font-size:.8rem}
+.post-head:has(.post-meta:empty){margin-bottom:1rem}
+.md{font-size:16px; line-height:1.65; color:#333}
+.md > :first-child{margin-top:0}
+.md p{margin:1rem 0}
+.md h1,.md h2,.md h3,.md h4{font-weight:600; line-height:1.65; scroll-margin-top:92px}
+.md h1{font-size:2.1rem; letter-spacing:-.02em; margin:0 0 1rem}
+.md h2{font-size:1.4rem; letter-spacing:-.01em; margin:2.6rem 0 .9rem; padding:0; border:0}
+.md h3{font-size:1.12rem; letter-spacing:0; margin:2rem 0 .6rem}
+.md h4{font-size:1rem; margin:1.6rem 0 .5rem}
+.md h1 + h2, .md h2 + h3, .md h3 + h4{margin-top:1.1rem}
+.md ul,.md ol{padding-left:1.4rem; margin:1rem 0}
+.md li{margin:.3rem 0}
+.md code{background:#f5f5f7; padding:.18em .42em; border-radius:5px; font-size:.88em; font-family:ui-monospace, "Cascadia Code", Consolas, Menlo, monospace}
+.md pre{background:#f5f5f7; border:0; border-radius:12px; padding:1.1rem 1.2rem; margin:1rem 0}
+.md pre code{font-size:.85rem; padding:0; background:none}
+.md blockquote{margin:1.2rem 0; padding:.6rem 1.1rem; border-left:3px solid #52525b; color:#7a7a85; background:rgba(0,0,0,.06); border-radius:0 8px 8px 0}
+.md hr{border:0; border-top:1px solid #ebebef; margin:2.5rem 0}
+.md table{display:table; width:100%; margin:1.2rem 0; font-size:.92rem}
+.md th,.md td{border:1px solid #ebebef; padding:.6rem .8rem}
+.md th{background:#fafafa; font-weight:600}
+.md img{max-width:min(100%, 460px); margin:1rem 0; border:1px solid #ebebef; border-radius:8px}
+.md mark{background:#fff3a3; padding:.1em .2em; border-radius:3px}
+.md details{margin:1.2rem 0; padding:.7rem 1rem; border:1px solid #dcdce2; border-radius:8px}
+.md details summary{font-weight:600}
+.md details[open] summary{margin-bottom:.6rem}
+.md li:has(> input[type=checkbox]){list-style:none; margin-left:-1.2rem}
+.md input[type=checkbox]{margin:0 .4rem 0 0}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .md{color:var(--ink)}
+  :root:not([data-theme="light"]) .md code, :root:not([data-theme="light"]) .md pre{background:var(--panel-2)}
+  :root:not([data-theme="light"]) .md hr, :root:not([data-theme="light"]) .md th, :root:not([data-theme="light"]) .md td, :root:not([data-theme="light"]) .md img{border-color:var(--line)}
+  :root:not([data-theme="light"]) .md th{background:var(--panel)}
+  :root:not([data-theme="light"]) .md blockquote{color:var(--ink-2); background:var(--panel); border-left-color:var(--ink-3)}
+}
+.md{word-break:normal; overflow-wrap:break-word} /* dev-wiki 와 같은 줄바꿈 */
+.post > .page-head .post-meta{margin:0; flex:none; font-size:.8rem; color:var(--crumb)}
+.post > .page-head .breadcrumb{flex:1}
+.md li:has(> input[type=checkbox]){list-style:none}
+.md input[type=checkbox]{accent-color:#52525b; vertical-align:-1px}
+/* 글 보기 본문 열: dev-wiki .content 처럼 글 폭 최대 984 (+ 오른쪽 3rem), 그 오른쪽에 목차 240 — 1080 상한은 목록 화면에만 */
+.main > .postwrap{max-width:none}
+@media (min-width:1181px){ .postwrap{grid-template-columns:minmax(0,1032px) 240px; justify-content:space-between} }
