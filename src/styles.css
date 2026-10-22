@@ -895,3 +895,21 @@ summary.ct-row:hover .ct-chev{color:var(--ink)}
 .ed-note{margin:8px 0 0; font-size:12.5px; color:var(--ink-2)}
 .linkbtn{padding:0; font-size:inherit; color:var(--ink-3); text-decoration:underline}
 .ct-name.all{margin-bottom:.35rem} /* 전체 ↔ 첫 카테고리 사이 = 1단계 묶음 사이와 같게 */
+
+/* ══ 글 보기: dev-wiki 와 같은 배치 — 경로·편집은 본문 열 위, 목차는 오른쪽 열 맨 위부터 ══ */
+.post > .page-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:1.25rem; padding:0}
+.post > .page-head .breadcrumb{flex:1}
+.wbtn.sm{padding:.3rem .75rem; font-size:.8rem} /* dev-wiki .btn.small */
+.post-head{margin-top:0}
+@media (min-width:1181px){
+  .postwrap{grid-template-columns:minmax(0,1fr) 240px; gap:0}
+  .post{padding-right:48px}
+  /* dev-wiki .toc: 240px, 안쪽 0 1.5rem, 제목 .78rem 700 대문자 회색, 항목 사이 .55rem, 들여쓰기 .8rem 단위, 글자 .85rem 회색 */
+  .toc{padding:0 1.5rem; top:88px; max-height:calc(100vh - 104px)}
+  .toc ul{border-left:0; gap:0; display:block}
+  .toc li{margin:.55rem 0}
+  .toc .toc-d0 a{padding-left:.55rem} .toc .toc-d1 a{padding-left:1.35rem} .toc .toc-d2 a{padding-left:2.15rem} .toc .toc-d3 a{padding-left:2.95rem}
+  .toc li a{display:block; padding:0 0 0 .55rem; text-indent:-.55rem; font-size:.85rem; line-height:1.35; color:var(--crumb); white-space:normal; overflow:visible}
+  .toc li a:hover{color:#52525b}
+}
+.toc-title{font-weight:700; font-size:.78rem; letter-spacing:.03em; text-transform:uppercase; color:var(--crumb); margin-bottom:.7rem}

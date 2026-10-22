@@ -17,10 +17,10 @@ export function Toc({ items }: { items: TocItem[] }) {
   const min = Math.min(...items.map((i) => i.level));
   return (
     <nav className="toc" aria-label="목차">
-      <p className="sect-label">목차</p>
+      <div className="toc-title">목차</div>
       <ul>
         {items.map((i) => (
-          <li key={i.id} className={"toc-l" + (i.level - min)}>
+          <li key={i.id} className={"toc-d" + Math.min(i.level - min, 3)}>
             <a href={"#" + i.id}>{i.text}</a>
           </li>
         ))}

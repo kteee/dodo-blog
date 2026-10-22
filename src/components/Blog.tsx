@@ -189,30 +189,29 @@ export function PostView({ profile, post, categories, onCategory, isOwner, onEdi
 
   return (
     <>
-      {/* dev-wiki .page-head: 왼쪽 경로(홈 / 카테고리… / 글 제목), 오른쪽 수정 */}
-      <div className="toolbar page-head">
-        <nav className="breadcrumb" aria-label="경로">
-          <a href={home} onClick={onLinkClick}>
-            홈
-          </a>
-          {crumbs.map((c) => (
-            <span key={c.id}>
-              <span className="sep">/</span>
-              <a href={home} onClick={(e) => { e.preventDefault(); onCategory?.(c.id); }}>{c.name}</a>
-            </span>
-          ))}
-          <span className="sep">/</span>
-          <span className="cur">{post.title || "제목 없음"}</span>
-        </nav>
-        <span className="spacer" />
-        {isOwner && onEdit && (
-          <button className="btn sm" onClick={onEdit}>
-            수정
-          </button>
-        )}
-      </div>
+      {/* dev-wiki 처럼: 본문 열 = 경로·편집 줄 + 글, 오른쪽 열 = 목차 (편집 버튼은 목차 위가 아니라 본문 열 오른쪽 끝) */}
       <div className="postwrap">
         <div className="post">
+          <div className="page-head">
+            <nav className="breadcrumb" aria-label="경로">
+              <a href={home} onClick={onLinkClick}>
+                홈
+              </a>
+              {crumbs.map((c) => (
+                <span key={c.id}>
+                  <span className="sep">/</span>
+                  <a href={home} onClick={(e) => { e.preventDefault(); onCategory?.(c.id); }}>{c.name}</a>
+                </span>
+              ))}
+              <span className="sep">/</span>
+              <span className="cur">{post.title || "제목 없음"}</span>
+            </nav>
+            {isOwner && onEdit && (
+              <button className="wbtn sm" onClick={onEdit}>
+                편집
+              </button>
+            )}
+          </div>
           <header className="post-head">
             <h1 className="post-h1">{post.title || "제목 없음"}</h1>
             <p className="post-meta">
