@@ -122,6 +122,8 @@ export default function App() {
   // 홈: 블로그가 있으면 내 블로그로
   useEffect(() => {
     if (path === "/") go(APP, true); // 배포에선 두두 홈이 / 를 가짐. 개발 서버에서만 옴
+    // blog.dododiary.com/@아이디/… 가 301 로 /blog/@아이디/… 가 되어 들어오면 실제 주소 /@아이디/… 로
+    else if (seg[0] === "blog" && seg[1]?.startsWith("@")) go("/" + seg.slice(1).map(encodeURIComponent).join("/"), true);
     else if (path === APP && ready && profile) go(blogHome(profile.handle), true);
   }, [path, ready, profile]);
   useEffect(() => {
