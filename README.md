@@ -104,7 +104,33 @@ http://localhost:5180/blog (투두 5175 · 북로그 5177 · 홈 5178). `/` 는 
 4. 확인: `https://dododiary.com/blog` 가 블로그 로그인 화면, `https://dododiary.com/@아이디` 가 블로그 홈, `https://dododiary.com/` 은 그대로 두두 홈
    - `/@…` 요청도 블로그 Worker 의 정적 에셋에 없는 경로라 `not_found_handling: single-page-application` 으로 블로그 index.html 이 나간다
 5. Supabase Redirect URLs: `https://dododiary.com/blog` 추가, `https://blog.dododiary.com` 제거 (위 "Supabase 연결" 3번)
+   - `blog.dododiary.com` 은 아래 '301 리다이렉트' 로 살려 둔다
 6. **홈(dodo-home) 쪽**: `robots.txt` 는 루트(홈 Worker) 것만 읽히므로 홈 robots 에 `Disallow: /blog/write`, `/blog/edit/`, `/blog/my`, `/blog/import` 추가. 홈 푸터·/account 의 블로그 링크는 `https://dododiary.com/blog`. 투두 `AppsMenu` · 북로그 푸터의 블로그 링크도 같은 주소
+
+### `blog.dododiary.com` → `dododiary.com/blog` 301 (입구 주소 유지)
+
+투두(`todo.`)·북로그(`books.`)와 입구 모양을 맞추려고 `blog.dododiary.com` 은 살려 두고 실제 주소로 **301 리다이렉트**한다. 코드가 아니라 Cloudflare 설정 두 가지로 한다 (경로·쿼리 보존: `blog.dododiary.com/x?y` → `dododiary.com/blog/x?y`).
+
+1. **DNS 레코드** (Cloudflare → dododiary.com → DNS → Add record): 리다이렉트 규칙은 프록시를 거쳐야 돌아가므로 가짜 대상이라도 **Proxied** 레코드가 있어야 한다
+   - Type `AAAA` · Name `blog` · IPv6 `100::` · Proxy status **Proxied(주황 구름)** · TTL Auto
+   - (`100::` 은 Cloudflare 문서가 "원본 없이 규칙만 돌릴 때" 쓰라고 안내하는 블랙홀 주소. `A 192.0.2.1` 도 같은 용도)
+2. **Redirect Rule** (dododiary.com → Rules → Redirect Rules → Create rule):
+   - Rule name: `blog subdomain → /blog`
+   - When incoming requests match → **Custom filter expression**:
+     ```
+     (http.host eq "blog.dododiary.com")
+     ```
+   - Then → **Type: Dynamic**, Expression:
+     ```
+     concat("https://dododiary.com/blog", http.request.uri)
+     ```
+     `http.request.uri` 는 경로 + `?쿼리` 까지라 따로 "Preserve query string" 을 켤 필요 없음
+   - Status code: **301**
+   - 결과: `https://blog.dododiary.com/` → `https://dododiary.com/blog/`, `https://blog.dododiary.com/my?x=1` → `https://dododiary.com/blog/my?x=1`
+
+- 홈·푸터·투두·북로그 등 서비스 소개 링크는 `https://blog.dododiary.com` 을 그대로 써도 된다 (리다이렉트됨). 블로그 **안**의 OG url·canonical·sitemap 은 실제 주소 `https://dododiary.com/...` 를 쓴다 (`index.html` 의 `og:url` 은 이미 그렇게)
+- Supabase Redirect URLs 엔 `https://blog.dododiary.com` 을 넣지 않는다 (로그인은 늘 `https://dododiary.com/blog` 로 돌아옴)
+- 확인: `curl -sI https://blog.dododiary.com/my?x=1 | grep -i location` → `location: https://dododiary.com/blog/my?x=1`
 
 대안(라우트가 우선 적용되지 않는 경우): 홈 Worker 가 `/@*`·`/blog*` 를 [Service binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/) 으로 블로그 Worker 에 넘기는 방식. 지금은 문서상 라우트가 우선이라 쓰지 않는다.
 
