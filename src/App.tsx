@@ -12,7 +12,6 @@ import { SiteFooter } from "./components/SiteFooter";
 import { Toasts } from "./components/Toasts";
 import { BlogSide, NO_FILTER, PostList, PostView, type Filter } from "./components/Blog";
 import { Editor } from "./components/Editor";
-import { ImportPage } from "./components/Import";
 import { CategoriesPage } from "./components/Categories";
 import { Search } from "./components/Search";
 import { APP, app, blogHome, postUrl } from "./lib/paths";
@@ -70,7 +69,7 @@ export default function App() {
   }, [menuOpen]);
   useEffect(() => setMenuOpen(false), [path]);
   useEffect(() => {
-    const noindex = seg[0] === "blog" && ["write", "edit", "import", "my", "categories"].includes(seg[1] ?? "");
+    const noindex = seg[0] === "blog" && ["write", "edit", "my", "categories"].includes(seg[1] ?? "");
     let m = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
     if (noindex && !m) {
       m = document.createElement("meta");
@@ -118,7 +117,7 @@ export default function App() {
     <Search posts={blog.posts} onPick={(p) => go(p.status === "public" ? postUrl(blog.profile.handle, p.slug) : app("/edit/" + p.id))} />
   ) : undefined;
   const nav = (
-    <TopNav brand={brand} search={search} account={account} isLocal={isLocal} myBlog={profile ? blogHome(profile.handle) : null} menuOpen={menuOpen} setMenuOpen={setMenuOpen} onSignIn={() => signIn()} onSignOut={() => signOut()} />
+    <TopNav brand={brand} search={search} account={account} isLocal={isLocal} myBlog={profile ? blogHome(profile.handle) : null} onNew={profile && actions && sub[0] !== "edit" ? () => go(app("/write")) : undefined} menuOpen={menuOpen} setMenuOpen={setMenuOpen} onSignIn={() => signIn()} onSignOut={() => signOut()} />
   );
   const loading = (
     <div className="gate">
@@ -171,9 +170,7 @@ export default function App() {
       main = <CreateBlog taken={(h) => anyRepo!.handleTaken(h)} onCreate={(h, t) => actions!.createProfile(h, t)} />;
     } else if (sub[0] === "categories" && ready) {
       main = <CategoriesPage profile={profile} categories={categories} posts={posts} actions={{ add: actions.addCategory, update: actions.updateCategory, remove: actions.deleteCategory }} />;
-    } else if (sub[0] === "import" && ready) {
-      main = <ImportPage profile={profile} onImport={actions.importPosts} onDone={() => go(blogHome(profile.handle))} />;
-    } else if (sub[0] === "edit" && sub[1] && ready) {
+        } else if (sub[0] === "edit" && sub[1] && ready) {
       const post = posts.find((p) => p.id === sub[1]);
       main = !post ? (
         <NotFound text="글을 찾을 수 없어요" href={blogHome(profile.handle)} />
@@ -197,7 +194,7 @@ export default function App() {
       <div className="page">
         {nav}
         {editing ? <div className="app one"><main className="main">{main}</main></div> : main}
-        {!editing && sub[0] !== "import" && sub[0] !== "categories" && <SiteFooter />}
+        {!editing && sub[0] !== "categories" && <SiteFooter />}
         {store.net.offline && <NetBar n={store.net.waiting} />}
         <Toasts toasts={store.toasts} dismiss={store.dismiss} />
       </div>
@@ -235,8 +232,6 @@ export default function App() {
         categories={blog.categories}
         filter={filter}
         isOwner={isOwner}
-        onNew={isOwner ? () => go(app("/write")) : undefined}
-        onImport={isOwner ? () => go(app("/import")) : undefined}
       />
     );
   }

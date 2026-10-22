@@ -13,6 +13,8 @@ interface Props {
   isLocal: boolean;
   /** 로그인했고 블로그를 만들었으면 그 주소 (/<아이디>) */
   myBlog: string | null;
+  /** 블로그 주인이면 헤더 오른쪽에 "+ 새 글" (dev-wiki 상단 "+ 새 문서" 자리) */
+  onNew?: () => void;
   menuOpen: boolean;
   setMenuOpen: (o: boolean) => void;
   onSignIn: () => void;
@@ -42,7 +44,7 @@ export function GoogleButton({ onClick, size = "md" }: { onClick: () => void; si
 }
 
 /** 헤더 — 투두 TopNav 와 같은 구조: 왼쪽 열(로고) | 오른쪽 열(프로필). 남의 블로그를 보는 손님에겐 작은 로그인 버튼 */
-export function TopNav({ brand, search, account, isLocal, myBlog, menuOpen, setMenuOpen, onSignIn, onSignOut }: Props) {
+export function TopNav({ brand, search, account, isLocal, myBlog, onNew, menuOpen, setMenuOpen, onSignIn, onSignOut }: Props) {
   // 폰: 검색창 대신 돋보기 버튼(프로필 왼쪽). 누르면 아래 줄에 검색창이 열리고 바로 입력 가능 (북로그와 같음)
   const phone = usePhone();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -114,6 +116,11 @@ export function TopNav({ brand, search, account, isLocal, myBlog, menuOpen, setM
       </a>
       <div className="topnav-main">
         {searchSlot}
+        {onNew && (
+          <button className="wbtn topnew" aria-label="새 글" onClick={onNew}>
+            +<span className="tx">&nbsp;새 글</span>
+          </button>
+        )}
         <div className="acct">
           {!account ? (
             !isLocal && <GoogleButton size="sm" onClick={onSignIn} />

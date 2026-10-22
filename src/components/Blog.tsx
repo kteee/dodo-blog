@@ -76,10 +76,8 @@ interface ListProps {
   categories: Category[];
   filter: Filter;
   isOwner: boolean;
-  onNew?: () => void;
-  onImport?: () => void;
 }
-export function PostList({ profile, posts, categories, filter, isOwner, onNew, onImport }: ListProps) {
+export function PostList({ profile, posts, categories, filter, isOwner }: ListProps) {
   const list = useMemo(() => {
     let l = posts;
     if (filter.tag === "__draft") l = l.filter((p) => p.status === "draft");
@@ -114,16 +112,6 @@ export function PostList({ profile, posts, categories, filter, isOwner, onNew, o
           <span className="sub">{list.length}</span>
         </h1>
         <span className="spacer" />
-        {isOwner && onImport && (
-          <button className="wbtn" onClick={onImport}>
-            가져오기
-          </button>
-        )}
-        {isOwner && onNew && (
-          <button className="wbtn" onClick={onNew}>
-            + 새 글
-          </button>
-        )}
       </div>
       <div className="scroll">
         {list.length === 0 ? (
@@ -134,7 +122,7 @@ export function PostList({ profile, posts, categories, filter, isOwner, onNew, o
               ) : (
                 <>
                   <p>아직 글이 없어요.</p>
-                  <p>＋ 새 글을 눌러 첫 글을 써보세요. 공개하기 전까지는 나만 볼 수 있어요.</p>
+                  <p>위의 + 새 글을 눌러 첫 글을 써보세요. 공개하기 전까지는 나만 볼 수 있어요.</p>
                 </>
               )
             ) : (

@@ -8,6 +8,7 @@ import { TablePanel } from "./TablePanel";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { onLinkClick } from "../hooks/useRoute";
 import { report } from "../lib/monitoring";
+import { readMdFile } from "../lib/importMd";
 import { blogHome, postUrl, showUrl } from "../lib/paths";
 
 interface Props {
@@ -74,6 +75,8 @@ export function Editor({ profile, post, categories, actions, onBack }: Props) {
   const latest = useRef({ title, tagText, body });
   latest.current = { title, tagText, body };
   const filePicker = useRef<HTMLInputElement>(null);
+  const mdPicker = useRef<HTMLInputElement>(null);
+  const [overwrite, setOverwrite] = useState<{ title: string; body: string; tags: string[] } | null>(null);
 
   // 다른 기기에서 바뀐 값: 내가 입력 중이 아닐 때만 반영
   useEffect(() => {
@@ -214,6 +217,35 @@ export function Editor({ profile, post, categories, actions, onBack }: Props) {
     e.preventDefault();
     uploadImages(files);
   };
+
+  /* ── 가져오기: .md 하나 → 이 글에 채움, 여러 개 → 각각 임시글 ── */
+  const fill = (m: { title: string; body: string; tags: string[] }) => {
+    setTitle(m.title);
+    setTagText(m.tags.join(", "));
+    setBody(m.body);
+    latest.current = { title: m.title, tagText: m.tags.join(", "), body: m.body };
+    touch();
+  };
+  const importMd = async (files: File[]) => {
+    setErr(null);
+    const read = (await Promise.all(files.map(readMdFile))).filter((x): x is NonNullable<typeof x> => !!x);
+    const ok = read.filter((m) => !m.tooBig);
+    if (!read.length) return setErr("마크다운(.md) 파일만 가져올 수 있어요.");
+    if (!ok.length) return setErr("파일이 너무 커요 (본문 100KB 까지).");
+    if (ok.length === 1) {
+      const m = ok[0];
+      const empty = !latest.current.title.trim() && !latest.current.body.trim();
+      if (empty) fill(m);
+      else setOverwrite(m);
+      return;
+    }
+    const n = actions.importPosts(ok, false);
+    setErr(null);
+    setSaved("saved");
+    alertImported(n, read.length - ok.length);
+  };
+  const [imported, setImported] = useState<string | null>(null);
+  const alertImported = (n: number, skipped: number) => setImported(`${n}개를 임시글로 가져왔어요.` + (skipped ? ` ${skipped}개는 너무 커서 건너뜀.` : "") + " 블로그 목록에서 볼 수 있어요.");
 
   const { html } = useMarkdown(body);
   const isPublic = post.status === "public";
@@ -356,6 +388,9 @@ export function Editor({ profile, post, categories, actions, onBack }: Props) {
           ← {profile.title}
         </a>
         <span className="spacer" />
+        <button className="wbtn" title="마크다운(.md) 파일에서 가져오기" onClick={() => mdPicker.current?.click()}>
+          가져오기
+        </button>
         <span className={"ed-saved " + saved} aria-live="polite">
           {saved === "dirty" ? "저장 중…" : saved === "saved" ? "저장됨" : ""}
         </span>
@@ -522,6 +557,37 @@ export function Editor({ profile, post, categories, actions, onBack }: Props) {
         )}
       </div>
       {err && <p className="ed-err">{err}</p>}
+      {imported && (
+        <p className="ed-note">
+          {imported}{" "}
+          <button className="linkbtn" onClick={() => setImported(null)}>
+            닫기
+          </button>
+        </p>
+      )}
+      <input
+        ref={mdPicker}
+        type="file"
+        accept=".md,.markdown,.txt"
+        multiple
+        hidden
+        onChange={(e) => {
+          importMd([...(e.target.files ?? [])]);
+          e.target.value = "";
+        }}
+      />
+      {overwrite && (
+        <ConfirmDialog
+          title="지금 쓴 내용을 바꿀까요?"
+          body={`'${overwrite.title}' 파일의 제목·본문·태그로 이 글을 채워요. 지금 쓴 내용은 사라져요.`}
+          confirmLabel="바꾸기"
+          onConfirm={() => {
+            fill(overwrite);
+            setOverwrite(null);
+          }}
+          onCancel={() => setOverwrite(null)}
+        />
+      )}
       <input
         ref={filePicker}
         type="file"

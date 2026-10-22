@@ -875,3 +875,23 @@ summary.ct-row:hover .ct-chev{color:var(--ink)}
 :root[data-theme="dark"] .wbtn{border-color:var(--line-2); color:var(--ink)}
 :root[data-theme="dark"] .wbtn:hover{background:var(--panel); border-color:var(--ink-3)}
 .toolbar .wbtn + .wbtn{margin-left:-4px} /* dev-wiki 버튼 사이 .5rem (툴바 gap 12px → 8px) */
+
+/* 헤더 "+ 새 글" (dev-wiki 상단 버튼 자리: 검색 오른쪽 끝, 프로필 왼쪽) */
+.topnav-main .topnew{margin-left:auto}
+.topnav-main .topnew + .acct{margin-left:10px}
+@media (max-width:640px){
+  /* 폰: 한 줄 유지 — 제목은 줄어들고, + 새 글은 동그란 + 아이콘 */
+  .topnav{flex-wrap:nowrap}
+  .topnav .logo{min-width:0; flex:0 1 auto}
+  .logo .word.btitle{max-width:none; min-width:0}
+  .topnav-main .topnew{width:34px; height:34px; padding:0; justify-content:center; margin-left:0; font-size:18px; font-weight:400; flex:none}
+  .topnav-main .topnew .tx{display:none}
+  .topnav-main .search-btn{flex:none}
+  .search-btn + .topnew{margin-left:-12px}
+  .topnav-main .topnew + .acct{margin-left:4px; flex:none}
+  .topnav:has(.search-row){flex-wrap:wrap}
+}
+.ed-top .wbtn{padding:.3rem .75rem; font-size:.8rem} /* dev-wiki .btn.small */
+.ed-note{margin:8px 0 0; font-size:12.5px; color:var(--ink-2)}
+.linkbtn{padding:0; font-size:inherit; color:var(--ink-3); text-decoration:underline}
+.ct-name.all{margin-bottom:.35rem} /* 전체 ↔ 첫 카테고리 사이 = 1단계 묶음 사이와 같게 */

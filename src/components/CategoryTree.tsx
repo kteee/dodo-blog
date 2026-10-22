@@ -83,6 +83,12 @@ export function CategoryTree({ handle, categories, posts, selected: selectedIn, 
   return (
     <nav className="ctree" aria-label="카테고리">
       <ul className="ct-list top">
+        {/* 전체 글 (필터 없음). 글을 보거나 태그로 거르는 중엔 선택 표시 없음 */}
+        <li className="ct-cat">
+          <button className={"ct-name all" + (selectedIn === null && !currentPostId ? " on" : "")} onClick={() => onSelect(null)}>
+            <span className="nm">전체</span>
+          </button>
+        </li>
         {tops.map((c) => (
           <li key={c.id} className="ct-cat top">
             <div className="ct-row top">{nameRow(c)}</div>

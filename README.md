@@ -14,11 +14,10 @@
 | 경로 | 내용 |
 |---|---|
 | `/blog` | 로그인 전: 소개 + Google 로그인. 로그인 후 블로그가 없으면 **아이디·이름 정하기**, 있으면 `/@<아이디>` 로 |
-| `/@<아이디>` | 글 목록 (공개일 최신순). 왼쪽 사이드: 블로그 이름·소개 → 전체/임시글(주인만) → 태그 → 달. 주인에겐 **＋ 새 글**, **가져오기** |
+| `/@<아이디>` | 글 목록 (공개일 최신순). 왼쪽 사이드: 블로그 이름·소개 → 전체/임시글(주인만) → 태그 → 달. 주인에겐 헤더 오른쪽 **+ 새 글** |
 | `/@<아이디>/<글주소>` | 글 보기. 본문 720px, 넓은 화면(1181px~)엔 오른쪽 목차. 주인에겐 **수정** |
-| `/blog/write` → `/blog/edit/<id>` | 에디터. 제목 · 태그(쉼표) · 툴바 · 본문 textarea \| 미리보기 (폰은 쓰기/미리보기 탭). **0.5초 멈추면 자동 저장**. 공개하기 / 비공개로 / ⋯(주소 바꾸기·삭제) |
+| `/blog/write` → `/blog/edit/<id>` | 에디터. 위 버튼 줄 **가져오기**: .md 하나면 이 글에 제목·본문·태그를 채우고(내용이 있으면 확인), 여러 개면 각각 임시글로 (frontmatter title·date·tags, 없으면 첫 # 제목·파일 이름). 제목 · 태그(쉼표) · 툴바 · 본문 textarea \| 미리보기 (폰은 쓰기/미리보기 탭). **0.5초 멈추면 자동 저장**. 공개하기 / 비공개로 / ⋯(주소 바꾸기·삭제) |
 | `/blog/categories` | 카테고리 관리 표 (이름·순서(숫자 작을수록 위)·상위 바꾸기·삭제, 새 카테고리). 고치면 바로 저장 |
-| `/blog/import` | .md 여러 개 → 글 (frontmatter title·date·tags, 없으면 첫 # 제목·파일 이름). 임시글로 또는 바로 공개 |
 | `/blog/my` · `/blog/privacy` | 블로그 이름·소개 수정, 데이터 내보내기(JSON), 회원 탈퇴 / 개인정보 처리방침 |
 
 - 주소 체계와 경로 헬퍼는 `src/lib/paths.ts` (`app()`, `blogHome()`, `postUrl()`). 글쓰기 화면(`/blog/write·edit·import·my`)은 `<meta name="robots" content="noindex">`
@@ -137,7 +136,7 @@ src/
   components/Editor.tsx   에디터 (툴바·자동 저장·이미지·공개/비공개·주소·삭제)
   components/TablePanel.tsx 표 편집 격자
   components/Markdown.tsx 마크다운 렌더 훅 · 목차
-  components/Import.tsx   마크다운 가져오기
+  lib/importMd.ts         .md 파일 → 제목·본문·태그 (에디터 가져오기)
   components/MyPage.tsx · Privacy.tsx · SiteFooter.tsx · Toasts.tsx · ConfirmDialog.tsx · OptionsMenu.tsx
   data/useBlog.ts         내 블로그 상태 + 저장 큐 (투두 useDodo 와 같은 구조: 낙관적 반영, 순서 보장, 오프라인 재시도)
   data/supabase.ts        Supabase 저장소 (내 것 + 공개 읽기 + 이미지 업로드) / data/localRepo.ts 로컬 모드
